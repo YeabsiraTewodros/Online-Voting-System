@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vote</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <h1>Vote for Your Party</h1>
+  <%
+  const partyImages = {
+    'Prosperity Party (ብልጽግና ፓርቲ)': '/images/pp.png',
+    'Ethiopian Citizens for Social Justice - EZEMA (የኢትዮጵያ ዜጎች ለማኅበራዊ ፍትህ(ኢዜማ))': '/images/ezema.png',
+    'National Movement of Amhara (NaMA) የአማራ ብሔራዊ ንቅናቄ(አብን)': '/images/NaMA.png',
+    'Oromo Federalist Congress (OFC) ኦሮሞ ፌዴራሊስት ኮንግረስ(ኦፌኮ)': '/images/ofc.png'
+  };
+
+  const partyLeaders = {
+    'Prosperity Party (ብልጽግና ፓርቲ)': {
+      image: '/images/Abiy_Ahmed_Ali.png',
+      name: 'Prime Minister Abiy Ahmed',
+      nameAmharic: 'ጠቅላይ ሚኒስትር ዐቢይ አሕመድ',
+      description: 'Prime Minister of Ethiopia and leader of the Prosperity Party.'
+    },
+    'Ethiopian Citizens for Social Justice - EZEMA (የኢትዮጵያ ዜጎች ለማኅበራዊ ፍትህ(ኢዜማ))': {
+      image: '/images/Birhanu_Nega.png',
+      name: 'Berhanu Nega',
+      nameAmharic: 'በርሃኑ ነጋ',
+      description: 'Economist and opposition leader, former mayor of Addis Ababa.'
+    },
+    'National Movement of Amhara (NaMA) የአማራ ብሔራዊ ንቅናቄ(አብን)': {
+      image: '/images/Belete_Molla_Getahun.png',
+      name: 'Desalagne Chanie',
+      nameAmharic: 'ደሳላኝ ቻኒዬ',
+      description: 'Amhara nationalist leader and former parliament member.'
+    },
+    'Oromo Federalist Congress (OFC) ኦሮሞ ፌዴራሊስት ኮንግረስ(ኦፌኮ)': {
+      image: '/images/Merera_Gudina.png',
+      name: 'Obbo Merera Gudina',
+      nameAmharic: 'ኦቦ መረራ ጉዲና',
+      description: 'Oromo political leader and advocate for federalist reforms.'
+    }
+  };
+  %>
+  <form action="/vote" method="POST">
+    <div class="party-container">
+      <% parties.forEach((party, index) => { %>
+        <div class="party-card">
+          <input type="radio" id="<%= party %>" name="party" value="<%= party %>" required>
+          <label for="<%= party %>">
+            <img src="<%= partyImages[party] || 'https://via.placeholder.com/200x150?text=No+Image' %>" alt="<%= party %>">
+            <div class="party-name"><%= party %></div>
+          </label>
+          <% if (partyLeaders[party]) { %>
+            <div class="leader-tooltip">
+              <img src="<%= partyLeaders[party].image %>" alt="<%= partyLeaders[party].name %>" class="leader-tooltip-image">
+              <div class="leader-tooltip-content">
+                <h4><%= partyLeaders[party].name %></h4>
+                <p class="amharic-name"><%= partyLeaders[party].nameAmharic %></p>
+                <p><%= partyLeaders[party].description %></p>
+              </div>
+            </div>
+          <% } %>
+        </div>
+      <% }); %>
+    </div>
+    <button type="submit">Submit Vote</button>
+  </form>
+  <a href="/">Back to Home</a>
+  <a href="/party.html">About Parties</a>
+</body>
+</html>

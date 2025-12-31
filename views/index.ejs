@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ethiopian Vote System - Secure Digital Voting Platform</title>
+    <link rel="stylesheet" href="/css/home.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Top Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark shadow-lg" style="background-color: #374658 !important;">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center fw-bold" href="/">
+                <i class="fas fa-vote-yea me-2"></i>
+                የኢትዮጵያ የምርጫ ስርዓት
+            </a>
+
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link btn btn-light btn-sm me-2 px-3" href="/party.html">
+                            <i class="fas fa-sign-in-alt me-1"></i>about Parties
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link btn btn-light btn-sm me-2 px-3" href="/login">
+                            <i class="fas fa-sign-in-alt me-1"></i>Voter Login
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link btn btn-info btn-sm me-2 px-3" href="/admin/login">
+                            <i class="fas fa-user-shield me-1"></i>Admin Login
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link btn btn-success btn-sm px-3" href="/results">
+                            <i class="fas fa-chart-bar me-1"></i>View Results
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    <!-- Hero Section -->
+    <section class="hero-section py-5">
+        <div class="container hero-content">
+            <div class="row align-items-center min-vh-75">
+                <div class="col-lg-6 text-center text-lg-start mb-5 mb-lg-0">
+                    <div class="hero-content">
+                        <div class="hero-icon mb-4">
+                            <i class="fas fa-vote-yea text-white" style="font-size: 5rem;"></i>
+                        </div>
+                        <h1 class="display-3 fw-bold text-white mb-3">
+                            የኢትዮጵያ የምርጫ ስርዓት
+                        </h1>
+                        <h2 class="h2 text-white mb-4 opacity-90">
+                            Ethiopian Vote System
+                        </h2>
+                        <p class="lead text-white mb-4 fs-5">
+                            A secure, transparent, and accessible digital voting platform designed for Ethiopian citizens.
+                            Exercise your democratic right with confidence and ease.
+                        </p>
+                        <div class="hero-stats d-flex justify-content-center justify-content-lg-start gap-4 mb-4">
+                            <div class="stat-item">
+                                <div class="stat-number text-white fw-bold fs-4">100%</div>
+                                <div class="stat-label text-white opacity-75 small">Secure</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-number text-white fw-bold fs-4">24/7</div>
+                                <div class="stat-label text-white opacity-75 small">Available</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-number text-white fw-bold fs-4">Real-time</div>
+                                <div class="stat-label text-white opacity-75 small">Results</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="hero-actions-card">
+                        <div class="card border-0 shadow-lg-custom">
+                            <div class="card-body p-4 p-lg-5">
+                                <h3 class="text-center mb-4 fw-bold text-dark">Choose Your Action</h3>
+                                <div class="d-grid gap-3">
+                                    <a href="/login" class="btn btn-primary btn-lg d-flex align-items-center justify-content-center py-3">
+                                        <i class="fas fa-sign-in-alt me-3 fs-5"></i>
+                                        <div class="text-start">
+                                            <div class="fw-bold">Voter Login</div>
+                                            <small>Access your voting dashboard</small>
+                                        </div>
+                                    </a>
+                                    <a href="/admin/login" class="btn btn-info btn-lg d-flex align-items-center justify-content-center py-3">
+                                        <i class="fas fa-user-shield me-3 fs-5"></i>
+                                        <div class="text-start">
+                                            <div class="fw-bold">Admin Login</div>
+                                            <small>System administration</small>
+                                        </div>
+                                    </a>
+                                    <a href="/results" class="btn btn-success btn-lg d-flex align-items-center justify-content-center py-3">
+                                        <i class="fas fa-chart-bar me-3 fs-5"></i>
+                                        <div class="text-start">
+                                            <div class="fw-bold">View Results</div>
+                                            <small>Check election results</small>
+                                        </div>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Image Gallery Section -->
+    <section class="image-gallery-section py-5" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
+        <div class="container-fluid">
+            <div class="row justify-content-center">
+                <div class="col-12 text-center mb-5">
+                    <div class="section-header">
+                        <i class="fas fa-images text-primary mb-3" style="font-size: 3rem;"></i>
+                        <h2 class="display-5 fw-bold text-dark mb-3">Election Gallery</h2>
+                        <p class="lead text-muted">Experience the beauty of democracy through our visual journey</p>
+                        <div class="decorative-line mx-auto"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="horizontal-gallery-container">
+            <div class="horizontal-gallery">
+                    <!-- Gallery Item 1 -->
+                    <div class="gallery-item">
+                        <div class="gallery-card">
+                            <div class="image-container">
+                                <img src="/images/vote.png" class="gallery-image" alt="Vote Image">
+                                <div class="image-overlay"></div>
+                                <div class="image-badge">
+                                    <i class="fas fa-star text-warning"></i>
+                                </div>
+                            </div>
+                            <div class="gallery-content">
+                                <div class="icon-wrapper mb-3">
+                                    <i class="fas fa-bullhorn text-primary" style="font-size: 2rem;"></i>
+                                </div>
+                                <h4 class="fw-bold text-dark mb-2">Make Your Voice Heard</h4>
+                                <p class="text-muted small mb-3">Every vote counts in shaping Ethiopia's future. Your participation matters in building a stronger democracy.</p>
+                                <div class="gallery-features">
+                                    <span class="feature-tag">
+                                        <i class="fas fa-check-circle text-success me-1"></i>Secure & Anonymous
+                                    </span>
+                                    <span class="feature-tag">
+                                        <i class="fas fa-check-circle text-success me-1"></i>Real-time Results
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Gallery Item 2 -->
+                    <div class="gallery-item">
+                        <div class="gallery-card">
+                            <div class="image-container">
+                                <img src="/images/vote1.png" class="gallery-image" alt="Vote Image 1">
+                                <div class="image-overlay"></div>
+                                <div class="image-badge">
+                                    <i class="fas fa-shield-alt text-success"></i>
+                                </div>
+                            </div>
+                            <div class="gallery-content">
+                                <div class="icon-wrapper mb-3">
+                                    <i class="fas fa-lock text-success" style="font-size: 2rem;"></i>
+                                </div>
+                                <h4 class="fw-bold text-dark mb-2">Secure Voting Process</h4>
+                                <p class="text-muted small mb-3">Advanced technology ensures your vote is counted accurately and your privacy is protected.</p>
+                                <div class="gallery-features">
+                                    <span class="feature-tag">
+                                        <i class="fas fa-check-circle text-success me-1"></i>Blockchain Security
+                                    </span>
+                                    <span class="feature-tag">
+                                        <i class="fas fa-check-circle text-success me-1"></i>Encrypted Data
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Gallery Item 3 -->
+                    <div class="gallery-item">
+                        <div class="gallery-card unity-card">
+                            <div class="unity-content">
+                                <div class="unity-icon mb-3">
+                                    <i class="fas fa-users display-4 text-white"></i>
+                                </div>
+                                <h4 class="fw-bold text-white mb-2">Democratic Unity</h4>
+                                <p class="text-white small mb-3">Join millions of Ethiopians in exercising your democratic right through our secure digital platform.</p>
+                                <div class="unity-stats">
+                                    <div class="stat-item">
+                                        <div class="stat-number">100%</div>
+                                        <div class="stat-label">Secure</div>
+                                    </div>
+                                    <div class="stat-item">
+                                        <div class="stat-number">24/7</div>
+                                        <div class="stat-label">Available</div>
+                                    </div>
+                                    <div class="stat-item">
+                                        <div class="stat-number">Real-time</div>
+                                        <div class="stat-label">Results</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Gallery Item 4 -->
+                    <div class="gallery-item">
+                        <div class="gallery-card">
+                            <div class="image-container">
+                                <img src="/images/vote.png" class="gallery-image" alt="Vote Image">
+                                <div class="image-overlay"></div>
+                                <div class="image-badge">
+                                    <i class="fas fa-heart text-danger"></i>
+                                </div>
+                            </div>
+                            <div class="gallery-content">
+                                <div class="icon-wrapper mb-3">
+                                    <i class="fas fa-heart text-danger" style="font-size: 2rem;"></i>
+                                </div>
+                                <h4 class="fw-bold text-dark mb-2">Democratic Values</h4>
+                                <p class="text-muted small mb-3">Our voting system upholds the core democratic principles of freedom, equality, and justice for all citizens.</p>
+                                <div class="gallery-features">
+                                    <span class="feature-tag">
+                                        <i class="fas fa-check-circle text-success me-1"></i>Freedom of Choice
+                                    </span>
+                                    <span class="feature-tag">
+                                        <i class="fas fa-check-circle text-success me-1"></i>Equal Rights
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Gallery Item 5 -->
+                    <div class="gallery-item">
+                        <div class="gallery-card">
+                            <div class="image-container">
+                                <img src="/images/vote1.png" class="gallery-image" alt="Vote Image 1">
+                                <div class="image-overlay"></div>
+                                <div class="image-badge">
+                                    <i class="fas fa-mobile-alt text-info"></i>
+                                </div>
+                            </div>
+                            <div class="gallery-content">
+                                <div class="icon-wrapper mb-3">
+                                    <i class="fas fa-mobile-alt text-info" style="font-size: 2rem;"></i>
+                                </div>
+                                <h4 class="fw-bold text-dark mb-2">Mobile Democracy</h4>
+                                <p class="text-muted small mb-3">Vote from anywhere, anytime with our responsive mobile-first design that works on all devices.</p>
+                                <div class="gallery-features">
+                                    <span class="feature-tag">
+                                        <i class="fas fa-check-circle text-success me-1"></i>Mobile Optimized
+                                    </span>
+                                    <span class="feature-tag">
+                                        <i class="fas fa-check-circle text-success me-1"></i>Cross-Platform
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="scroll-indicator">
+                <i class="fas fa-arrow-left scroll-arrow left-arrow"></i>
+                <span class="scroll-text">Scroll to explore more</span>
+                <i class="fas fa-arrow-right scroll-arrow right-arrow"></i>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features-section py-5 bg-light">
+        <div class="container">
+            <div class="row">
+                <div class="col-12 text-center mb-5">
+                    <h2 class="display-5 fw-bold text-dark mb-3">Why Choose Our System?</h2>
+                    <p class="lead text-muted">Built with security, accessibility, and transparency in mind</p>
+                </div>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="card h-100 border-0 shadow-lg-custom">
+                        <div class="card-body text-center p-4">
+                            <div class="feature-icon mb-4">
+                                <i class="fas fa-shield-alt text-primary" style="font-size: 3rem;"></i>
+                            </div>
+                            <h4 class="card-title fw-bold mb-3">Military-Grade Security</h4>
+                            <p class="card-text text-muted">
+                                Your vote is protected with advanced encryption, secure authentication, and blockchain-level security measures.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="feature-card">
+                    <div class="card h-100 border-0 shadow-lg-custom">
+                        <div class="card-body text-center p-4">
+                            <div class="feature-icon mb-4">
+                                <i class="fas fa-mobile-alt text-success" style="font-size: 3rem;"></i>
+                            </div>
+                            <h4 class="card-title fw-bold mb-3">Mobile & Desktop Access</h4>
+                            <p class="card-text text-muted">
+                                Vote from any device - smartphone, tablet, or computer. Our responsive design works perfectly everywhere.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="feature-card">
+                    <div class="card h-100 border-0 shadow-lg-custom">
+                        <div class="card-body text-center p-4">
+                            <div class="feature-icon mb-4">
+                                <i class="fas fa-chart-line text-info" style="font-size: 3rem;"></i>
+                            </div>
+                            <h4 class="card-title fw-bold mb-3">Real-Time Results</h4>
+                            <p class="card-text text-muted">
+                                View live election results with complete transparency and comprehensive audit trails for verification.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="feature-card">
+                    <div class="card h-100 border-0 shadow-lg-custom election-process-card">
+                        <div class="card-body p-4">
+                            <div class="text-center mb-4">
+                                <div class="process-icon mb-3">
+                                    <i class="fas fa-list-check text-warning" style="font-size: 3rem;"></i>
+                                </div>
+                                <h4 class="card-title fw-bold mb-3">Election Process</h4>
+                                <p class="text-muted small">Follow these simple steps to cast your vote securely</p>
+                            </div>
+                            <div class="process-steps">
+                                <div class="step-item d-flex align-items-start mb-3">
+                                    <div class="step-number me-3">
+                                        <span class="badge bg-primary rounded-circle">1</span>
+                                    </div>
+                                    <div>
+                                        <h6 class="fw-bold mb-1">Register</h6>
+                                        <p class="text-muted small mb-0">Create your voter account with your national ID</p>
+                                    </div>
+                                </div>
+                                <div class="step-item d-flex align-items-start mb-3">
+                                    <div class="step-number me-3">
+                                        <span class="badge bg-success rounded-circle">2</span>
+                                    </div>
+                                    <div>
+                                        <h6 class="fw-bold mb-1">Verify</h6>
+                                        <p class="text-muted small mb-0">Complete identity verification through biometric or OTP</p>
+                                    </div>
+                                </div>
+                                <div class="step-item d-flex align-items-start mb-3">
+                                    <div class="step-number me-3">
+                                        <span class="badge bg-info rounded-circle">3</span>
+                                    </div>
+                                    <div>
+                                        <h6 class="fw-bold mb-1">Vote</h6>
+                                        <p class="text-muted small mb-0">Select your preferred candidate and submit your vote</p>
+                                    </div>
+                                </div>
+                                <div class="step-item d-flex align-items-start">
+                                    <div class="step-number me-3">
+                                        <span class="badge bg-warning rounded-circle">4</span>
+                                    </div>
+                                    <div>
+                                        <h6 class="fw-bold mb-1">Confirm</h6>
+                                        <p class="text-muted small mb-0">Receive confirmation and track results in real-time</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Call to Action Section -->
+    <section class="cta-section py-5">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-8 text-center">
+                    <div class="cta-card">
+                        <div class="card border-0 shadow-lg-custom">
+                            <div class="card-body p-5">
+                                <h3 class="display-6 fw-bold text-dark mb-3">Ready to Make Your Voice Heard?</h3>
+                                <p class="lead text-muted mb-4">
+                                    Join thousands of Ethiopian citizens in exercising your democratic right through our secure digital platform.
+                                </p>
+                                <div class="d-flex flex-column flex-sm-row gap-3 justify-content-center">
+                                    <a href="/login" class="btn btn-primary btn-lg px-4 py-3">
+                                        <i class="fas fa-vote-yea me-2"></i>Start Voting Now
+                                    </a>
+                                    <a href="/results" class="btn btn-outline-primary btn-lg px-4 py-3">
+                                        <i class="fas fa-chart-bar me-2"></i>View Live Results
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+</body>
+</html>
+            
+    <!-- Footer -->
+    <footer class="footer-section text-white py-5 mt-5" style="color: black; background-color: #FAFAFA !important;">
+        <div class="container">
+            <div class="row text-center">
+                <div class="col-12">
+                    <div class="footer-content">
+                        <div class="footer-icon mb-3">
+                            <i class="fas fa-vote-yea text-primary" style="font-size: 2rem;"></i>
+                        </div>
+                        <h5 class="fw-bold mb-3">Ethiopian Vote System</h5>
+                        <p class="text-white opacity-75 mb-3">
+                            <i class="fas fa-info-circle me-2"></i>
+                            For technical support, contact your local election office
+                        </p>
+                        <p class="text-white opacity-50 small mb-0">
+                            © 2024 Ethiopian Vote System - Building Democracy Through Technology
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>

@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<!-- eslint-disable -->
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Election Results - Ethiopian Vote System</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="/css/results.css">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  
+</head>
+<body>
+  <!-- Hero Section -->
+  <section class="results-hero">
+    <div class="container">
+      <div class="results-hero-content">
+        <h1 class="display-4 fw-bold mb-3">
+          <i class="fas fa-chart-bar me-3"></i>
+          Election Results
+        </h1>
+        <p class="lead mb-4">Live voting results for the Ethiopian Vote System</p>
+
+        <!-- Election Period Info -->
+        <div class="election-info mb-4">
+          <div class="election-timeline">
+            <div class="timeline-item start">
+              <div class="timeline-icon">
+                <i class="fas fa-play-circle"></i>
+              </div>
+              <div class="timeline-content">
+                <h6>Election Starts</h6>
+                <div class="date-display" id="election-start-date">
+                  <% if (typeof electionStartDate !== 'undefined' && electionStartDate) { %>
+                    <div class="date-main"><%= new Date(electionStartDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) %></div>
+                    <div class="date-time"><%= new Date(electionStartDate).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) %></div>
+                  <% } else { %>
+                    <div class="date-main">Not Set</div>
+                  <% } %>
+                </div>
+              </div>
+            </div>
+            <div class="timeline-connector">
+              <i class="fas fa-arrow-right"></i>
+            </div>
+            <div class="timeline-item end">
+              <div class="timeline-icon">
+                <i class="fas fa-stop-circle"></i>
+              </div>
+              <div class="timeline-content">
+                <h6>Election Ends</h6>
+                <div class="date-display" id="election-end-date">
+                  <% if (electionEndDate) { %>
+                    <div class="date-main"><%= new Date(electionEndDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) %></div>
+                    <div class="date-time"><%= new Date(electionEndDate).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) %></div>
+                  <% } else { %>
+                    <div class="date-main">Not Set</div>
+                  <% } %>
+                </div>
+              </div>
+            </div>
+          </div>
+
+
+        </div>
+
+        <div class="results-stats">
+          <div class="stat-item">
+            <div class="stat-number" id="total-votes"></div>
+            <div class="stat-label">Total Votes</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number" id="total-parties"><%= totalParties %></div>
+            <div class="stat-label">Parties</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number" id="leading-party">-</div>
+            <div class="stat-label">Leading</div>
+          </div>
+        </div>
+
+        <!-- Countdown Timer -->
+        <div id="countdown-container" class="countdown-container<% if (electionStartDate || electionEndDate) { %> countdown-visible<% } %>">
+          <h3 id="countdown-title" class="countdown-title"></h3>
+          <div class="countdown-timer">
+            <div class="countdown-item">
+              <div class="countdown-number" id="days">00</div>
+              <div class="countdown-label">Days</div>
+            </div>
+            <div class="countdown-item">
+              <div class="countdown-number" id="hours">00</div>
+              <div class="countdown-label">Hours</div>
+            </div>
+            <div class="countdown-item">
+              <div class="countdown-number" id="minutes">00</div>
+              <div class="countdown-label">Minutes</div>
+            </div>
+            <div class="countdown-item">
+              <div class="countdown-number" id="seconds">00</div>
+              <div class="countdown-label">Seconds</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tie Message -->
+        <div id="tie-message" class="alert alert-warning text-center mt-3" style="display: none;">
+          <i class="fas fa-balance-scale me-2"></i>
+          <strong>Tie Detected!</strong> Multiple parties are tied for the lead with equal votes.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Results Container -->
+  <div class="container results-container">
+    <div class="results-grid" id="results-grid">
+      <% results.sort((a, b) => b.votes - a.votes); %>
+      <% results.forEach((result, index) => { %>
+        <div class="result-card party-<%= (index % 5) + 1 %>">
+          <div class="rank-badge rank-<%= index < 3 ? index + 1 : 'other' %>">
+            <%= index + 1 %>
+          </div>
+          <div class="result-header">
+            <div class="party-icon">
+              <i class="fas fa-vote-yea"></i>
+            </div>
+            <div class="party-name"><%= result.party %></div>
+          </div>
+          <div class="result-body">
+            <div class="vote-count"><%= result.votes %></div>
+            <div class="vote-label">votes</div>
+
+            <div class="progress-container">
+              <div class="progress-bar" style="width: 0%"></div>
+            </div>
+
+            <div class="percentage">0%</div>
+          </div>
+        </div>
+      <% }); %>
+    </div>
+
+    <!-- Summary Card -->
+    <div class="summary-card">
+      <h3 class="summary-title">
+        <i class="fas fa-chart-pie me-2"></i>
+        Election Summary
+      </h3>
+      <div class="summary-stats">
+        <div class="summary-stat">
+          <div class="summary-number" id="summary-total">0</div>
+          <div class="summary-label">Total Votes</div>
+        </div>
+        <div class="summary-stat">
+          <div class="summary-number" id="summary-parties"><%= results.length %></div>
+          <div class="summary-label">Contesting Parties</div>
+        </div>
+        <div class="summary-stat">
+          <div class="summary-number" id="summary-turnout">100%</div>
+          <div class="summary-label">Voter Turnout</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="text-center">
+      <a href="/" class="back-btn">
+        <i class="fas fa-home me-2"></i>
+        Back to Home
+      </a>
+    </div>
+  </div>
+
+  <script>
+  /* eslint-disable */
+  // Results data injected by server
+  window.resultsData = <%- resultsDataJson %>;
+  /* eslint-enable */
+  </script>
+  <script src="/js/results.js"></script>
+</body>
+</html>
