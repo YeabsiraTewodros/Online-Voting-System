@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Edit Party - Ethiopian Vote System</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/edit_party.css">
+</head>
+<body>
+  <div class="form-container">
+    <h1 style="text-align: center; margin-bottom: 2rem; color: #495057;">
+      <i class="fas fa-edit"></i> Edit Political Party
+    </h1>
+
+    <form action="/admin/parties/edit/<%= party.id %>" method="POST" enctype="multipart/form-data">
+      <!-- Party Names -->
+      <div class="form-section">
+        <h3 class="section-title"><i class="fas fa-flag"></i> Party Names</h3>
+        <div class="form-group">
+          <label class="form-label">Party Name (English) <span class="required">*</span></label>
+          <input type="text" class="form-control" name="name_english" value="<%= party.name_english %>" required>
+          <div class="form-text">Enter the party's name in English</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Party Name (Amharic) <span class="required">*</span></label>
+          <input type="text" class="form-control" name="name_amharic" value="<%= party.name_amharic %>" required>
+          <div class="form-text">Enter the party's name in Amharic</div>
+        </div>
+      </div>
+
+      <!-- Leader Information -->
+      <div class="form-section">
+        <h3 class="section-title"><i class="fas fa-user-tie"></i> Leader Information</h3>
+        <div class="form-group">
+          <label class="form-label">Leader Name (English) <span class="required">*</span></label>
+          <input type="text" class="form-control" name="leader_name_english" value="<%= party.leader_name_english %>" required>
+          <div class="form-text">Enter the party leader's name in English</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Leader Name (Amharic) <span class="required">*</span></label>
+          <input type="text" class="form-control" name="leader_name_amharic" value="<%= party.leader_name_amharic %>" required>
+          <div class="form-text">Enter the party leader's name in Amharic</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Leader Image</label>
+          <% if (party.leader_image_url) { %>
+            <div class="mb-2">
+              <strong>Current Image:</strong><br>
+              <img src="<%= party.leader_image_url %>" alt="Current leader image" class="current-image">
+            </div>
+          <% } %>
+          <div class="mb-2">
+            <label class="form-label small">Option 1: Image URL (leave empty to keep current)</label>
+            <input type="url" class="form-control" name="leader_image_url" value="<%= party.leader_image_url || '' %>" placeholder="https://example.com/leader-image.jpg">
+            <div class="form-text">Enter URL for the leader's image</div>
+          </div>
+          <div class="mb-2">
+            <label class="form-label small">Option 2: Upload New Image File</label>
+            <input type="file" class="form-control" name="leader_image_file" accept="image/*">
+            <div class="form-text">Upload a new image file (JPG, PNG, GIF) - will replace current image</div>
+          </div>
+          <div class="form-text text-muted">Leave URL empty and don't upload file to keep current image. File upload takes priority over URL.</div>
+        </div>
+      </div>
+
+      <!-- Party Details -->
+      <div class="form-section">
+        <h3 class="section-title"><i class="fas fa-info-circle"></i> Party Details</h3>
+        <div class="form-group">
+          <label class="form-label">Ideology <span class="required">*</span></label>
+          <input type="text" class="form-control" name="ideology" value="<%= party.ideology %>" required>
+          <div class="form-text">Enter the party's political ideology (e.g., Social Justice, Federalism)</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Description (English) <span class="required">*</span></label>
+          <textarea class="form-control" name="description_english" rows="4" required><%= party.description_english %></textarea>
+          <div class="form-text">Provide a detailed description of the party in English</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Description (Amharic) <span class="required">*</span></label>
+          <textarea class="form-control" name="description_amharic" rows="4" required><%= party.description_amharic %></textarea>
+          <div class="form-text">Provide a detailed description of the party in Amharic</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Party Logo</label>
+          <% if (party.logo_url) { %>
+            <div class="mb-2">
+              <strong>Current Logo:</strong><br>
+              <img src="<%= party.logo_url %>" alt="Current logo" class="current-image">
+            </div>
+          <% } %>
+          <div class="mb-2">
+            <label class="form-label small">Option 1: Logo URL (leave empty to keep current)</label>
+            <input type="url" class="form-control" name="logo_url" value="<%= party.logo_url || '' %>" placeholder="https://example.com/logo.jpg">
+            <div class="form-text">Enter URL for the party's logo image</div>
+          </div>
+          <div class="mb-2">
+            <label class="form-label small">Option 2: Upload New Logo File</label>
+            <input type="file" class="form-control" name="logo_file" accept="image/*">
+            <div class="form-text">Upload a new logo image file (JPG, PNG, GIF) - will replace current logo</div>
+          </div>
+          <div class="form-text text-muted">Leave URL empty and don't upload file to keep current logo. File upload takes priority over URL.</div>
+        </div>
+      </div>
+
+      <!-- Form Actions -->
+      <div style="text-align: center; margin-top: 2rem;">
+        <button type="submit" class="btn-submit">
+          <i class="fas fa-save"></i> Update Party
+        </button>
+        <a href="/admin/parties" class="btn-cancel">
+          <i class="fas fa-times"></i> Cancel
+        </a>
+      </div>
+    </form>
+  </div>
+</body>
+</html>

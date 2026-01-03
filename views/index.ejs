@@ -52,6 +52,35 @@
             <div class="row align-items-center min-vh-75">
                 <div class="col-lg-6 text-center text-lg-start mb-5 mb-lg-0">
                     <div class="hero-content">
+                        <% if (registrationPeriodOpen) { %>
+                        <div class="d-flex justify-content-center mb-4">
+                            <div class="alert alert-success text-center py-3 px-4 shadow-lg" style="width:100%; max-width:520px; border-radius:12px;">
+                                    <div class="fw-bold display-6 mb-1">Registration OPEN</div>
+                                    <div class="lead mb-0">Voter registration is currently open — admins are registering voters now register before it end.</div>
+                                    <div id="registration-countdown" class="mt-3" style="display:none;">
+                                        <div id="registration-countdown-title" class="small text-muted mb-2"></div>
+                                        <div class="d-flex justify-content-center gap-4 align-items-center">
+                                        <div class="text-center px-3 mx-2">
+                                            <div id="reg-days" class="display-3 fw-bold mb-0" style="font-size:3rem;line-height:1;color:#1f2220;">00</div>
+                                            <div class="small text-muted">Days</div>
+                                        </div>
+                                        <div class="text-center px-3 mx-2">
+                                            <div id="reg-hours" class="display-3 fw-bold mb-0" style="font-size:3rem;line-height:1;color:#1f2220;">00</div>
+                                            <div class="small text-muted">Hours</div>
+                                        </div>
+                                        <div class="text-center px-3 mx-2">
+                                            <div id="reg-minutes" class="display-3 fw-bold mb-0" style="font-size:3rem;line-height:1;color:#1f2220;">00</div>
+                                            <div class="small text-muted">Minutes</div>
+                                        </div>
+                                        <div class="text-center px-3 mx-2">
+                                            <div id="reg-seconds" class="display-3 fw-bold mb-0" style="font-size:3rem;line-height:1;color:#1f2220;">00</div>
+                                            <div class="small text-muted">Seconds</div>
+                                        </div>
+                                    </div>
+                                    </div>
+                            </div>
+                        </div>
+                        <% } %>
                         <div class="hero-icon mb-4">
                             <i class="fas fa-vote-yea text-white" style="font-size: 5rem;"></i>
                         </div>
@@ -71,7 +100,7 @@
                                 <div class="stat-label text-white opacity-75 small">Secure</div>
                             </div>
                             <div class="stat-item">
-                                <div class="stat-number text-white fw-bold fs-4">24/7</div>
+                                <div class="stat-number text-white fw-bold fs-4">Ever Where</div>
                                 <div class="stat-label text-white opacity-75 small">Available</div>
                             </div>
                             <div class="stat-item">
@@ -204,7 +233,7 @@
                                         <div class="stat-label">Secure</div>
                                     </div>
                                     <div class="stat-item">
-                                        <div class="stat-number">24/7</div>
+                                        <div class="stat-number">Every Where</div>
                                         <div class="stat-label">Available</div>
                                     </div>
                                     <div class="stat-item">
@@ -244,25 +273,80 @@
                         </div>
                     </div>
 
-                    <!-- Gallery Item 5 -->
-                    <div class="gallery-item">
+                    <!-- Gallery Item 5-->
+                     <div class="gallery-item">
                         <div class="gallery-card">
                             <div class="image-container">
-                                <img src="/images/vote1.png" class="gallery-image" alt="Vote Image 1">
+                                <img src="/images/vote2.png" class="gallery-image" alt="Automated Counting">
                                 <div class="image-overlay"></div>
                                 <div class="image-badge">
-                                    <i class="fas fa-mobile-alt text-info"></i>
+                                    <i class="fas fa-shield-alt text-warning"></i>
                                 </div>
                             </div>
                             <div class="gallery-content">
                                 <div class="icon-wrapper mb-3">
-                                    <i class="fas fa-mobile-alt text-info" style="font-size: 2rem;"></i>
+                                    <i class="fas fa-bolt text-primary" style="font-size: 2rem;"></i>
+                                </div>
+                                <h4 class="fw-bold text-dark mb-2">Instant Results</h4>
+                                <p class="text-muted small mb-3">Traditional counting in Ethiopia is time-consuming. In this system, your vote is counted automatically the moment it is cast.</p>
+                                <div class="gallery-features">
+                                    <span class="feature-tag">
+                                        <i class="fas fa-check-circle text-success me-1"></i>Fast response
+                                    </span>
+                                    <span class="feature-tag">
+                                        <i class="fas fa-check-circle text-success me-1"></i>Real-time Counting
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Galary Item 6-->
+                     <div class="gallery-item">
+                        <div class="gallery-card">
+                            <div class="image-container">
+                                <img src="/images/vote4.png" class="gallery-image" alt="Digital Election Core">
+                                <div class="image-overlay"></div>
+                                <div class="image-badge">
+                                    <i class="fas fa-lock text-warning"></i>
+                                </div>
+                            </div>
+                            <div class="gallery-content">
+                                <div class="icon-wrapper mb-3">
+                                    <i class="fas fa-microchip text-primary" style="font-size: 2rem;"></i>
+                                </div>
+                                <h4 class="fw-bold text-dark mb-2">Automated Integrity</h4>
+                                <p class="text-muted small mb-3">Experience the next generation of democracy. Our system utilizes advanced algorithms to process and verify ballots instantly, ensuring that every Ethiopian voice is recorded with absolute precision and zero human error.</p>
+                                <div class="gallery-features">
+                                    <span class="feature-tag">
+                                        <i class="fas fa-fingerprint text-success me-1"></i>Secure Auth
+                                    </span>
+                                    <span class="feature-tag">
+                                        <i class="fas fa-sync-alt text-success me-1"></i>Live Tallying
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Gallery Item 7-->
+                    <div class="gallery-item">
+                        <div class="gallery-card">
+                            <div class="image-container">
+                                <img src="/images/vote1.png" class="gallery-image" alt="Mobile Voting">
+                                <div class="image-overlay"></div>
+                                <div class="image-badge">
+                                    <i class="fas fa-fingerprint text-info"></i>
+                                </div>
+                            </div>
+                            <div class="gallery-content">
+                                <div class="icon-wrapper mb-3">
+                                    <i class="fas fa-globe-africa text-info" style="font-size: 2rem;"></i>
                                 </div>
                                 <h4 class="fw-bold text-dark mb-2">Mobile Democracy</h4>
                                 <p class="text-muted small mb-3">Vote from anywhere, anytime with our responsive mobile-first design that works on all devices.</p>
                                 <div class="gallery-features">
                                     <span class="feature-tag">
-                                        <i class="fas fa-check-circle text-success me-1"></i>Mobile Optimized
+                                        <i class="fas fa-check-circle text-success me-1"></i>Secure Access
                                     </span>
                                     <span class="feature-tag">
                                         <i class="fas fa-check-circle text-success me-1"></i>Cross-Platform
@@ -274,9 +358,9 @@
                 </div>
             </div>
             <div class="scroll-indicator">
-                <i class="fas fa-arrow-left scroll-arrow left-arrow"></i>
+                <i class="fas fa-chevron-left scroll-arrow left-arrow"></i>
                 <span class="scroll-text">Scroll to explore more</span>
-                <i class="fas fa-arrow-right scroll-arrow right-arrow"></i>
+                <i class="fas fa-chevron-right scroll-arrow right-arrow"></i>
             </div>
         </div>
     </section>
@@ -299,7 +383,7 @@
                             </div>
                             <h4 class="card-title fw-bold mb-3">Military-Grade Security</h4>
                             <p class="card-text text-muted">
-                                Your vote is protected with advanced encryption, secure authentication, and blockchain-level security measures.
+                               Your vote is the foundation of democracy, and protecting its integrity is our highest priority. Our platform utilizes End-to-End Encryption (E2EE) to ensure that your ballot remains private from the moment it is cast until it is counted. To prevent fraud, we implement Multi-Factor Authentication (MFA) and biometric verification, ensuring only eligible citizens can participate. Finally, by leveraging Distributed Ledger Technology (Blockchain), we provide an immutable record of the election, making it mathematically impossible to alter or delete votes once they are submitted.
                             </p>
                         </div>
                     </div>
@@ -312,7 +396,7 @@
                             </div>
                             <h4 class="card-title fw-bold mb-3">Mobile & Desktop Access</h4>
                             <p class="card-text text-muted">
-                                Vote from any device - smartphone, tablet, or computer. Our responsive design works perfectly everywhere.
+                                Democracy should be accessible to every citizen, regardless of their location or the device they own. Our platform is engineered with a universal-access architecture, ensuring a seamless experience across smartphones, tablets, and desktop computers. Recognizing the diverse connectivity landscape in Ethiopia, we have optimized the system to be data-efficient, allowing it to perform reliably even on slower networks. Whether you are in a bustling city using a PC or in a remote area on a mobile device, our responsive interface adapts perfectly to your screen, ensuring your voice is heard without technical barriers.
                             </p>
                         </div>
                     </div>
@@ -325,8 +409,7 @@
                             </div>
                             <h4 class="card-title fw-bold mb-3">Real-Time Results</h4>
                             <p class="card-text text-muted">
-                                View live election results with complete transparency and comprehensive audit trails for verification.
-                            </p>
+                                Eliminate the uncertainty of waiting days for election outcomes. Our platform features a Live Tallying Dashboard that streams results in real-time as ballots are verified and decrypted. Every single vote generates a unique, anonymous Digital Audit Trail, allowing independent observers and citizens to verify the integrity of the count without compromising voter privacy. By providing granular data visualizations and downloadable reports, we ensure that the electoral process is not only fast but completely beyond reproach, fostering national trust through total visibility.
                         </div>
                     </div>
                 </div>
@@ -347,7 +430,7 @@
                                     </div>
                                     <div>
                                         <h6 class="fw-bold mb-1">Register</h6>
-                                        <p class="text-muted small mb-0">Create your voter account with your national ID</p>
+                                        <p class="text-muted small mb-0">Register by going to the nearest Election Board </p>
                                     </div>
                                 </div>
                                 <div class="step-item d-flex align-items-start mb-3">
@@ -356,7 +439,7 @@
                                     </div>
                                     <div>
                                         <h6 class="fw-bold mb-1">Verify</h6>
-                                        <p class="text-muted small mb-0">Complete identity verification through biometric or OTP</p>
+                                        <p class="text-muted small mb-0">Change your password from default to whatever you want</p>
                                     </div>
                                 </div>
                                 <div class="step-item d-flex align-items-start mb-3">
@@ -365,7 +448,7 @@
                                     </div>
                                     <div>
                                         <h6 class="fw-bold mb-1">Vote</h6>
-                                        <p class="text-muted small mb-0">Select your preferred candidate and submit your vote</p>
+                                        <p class="text-muted small mb-0">Select your preferred poletical party and submit your vote</p>
                                     </div>
                                 </div>
                                 <div class="step-item d-flex align-items-start">
@@ -412,8 +495,68 @@
             </div>
         </div>
     </section>
+    </section>
 
-</body>
+    <!-- Registration countdown script -->
+    <script>
+        (function() {
+            // Safe access to template variables (they may be empty strings)
+            const rawStart = '<%= registrationStartDate %>';
+            const rawEnd = '<%= registrationEndDate %>';
+            const regStart = rawStart ? new Date(rawStart) : null;
+            const regEnd = rawEnd ? new Date(rawEnd) : null;
+
+            function pad(n){return n.toString().padStart(2,'0');}
+
+            function updateRegCountdown(targetDate, title) {
+                const now = new Date();
+                const timeLeft = targetDate - now;
+                const container = document.getElementById('registration-countdown');
+                const titleEl = document.getElementById('registration-countdown-title');
+
+                if (!container || !titleEl) return;
+
+                if (timeLeft <= 0) {
+                    document.getElementById('reg-days').textContent = '00';
+                    document.getElementById('reg-hours').textContent = '00';
+                    document.getElementById('reg-minutes').textContent = '00';
+                    document.getElementById('reg-seconds').textContent = '00';
+                    titleEl.textContent = title + ' (now)';
+                    return;
+                }
+
+                const days = Math.floor(timeLeft / (1000*60*60*24));
+                const hours = Math.floor((timeLeft % (1000*60*60*24)) / (1000*60*60));
+                const minutes = Math.floor((timeLeft % (1000*60*60)) / (1000*60));
+                const seconds = Math.floor((timeLeft % (1000*60)) / 1000);
+
+                document.getElementById('reg-days').textContent = pad(days);
+                document.getElementById('reg-hours').textContent = pad(hours);
+                document.getElementById('reg-minutes').textContent = pad(minutes);
+                document.getElementById('reg-seconds').textContent = pad(seconds);
+                titleEl.textContent = title;
+            }
+
+            try {
+                const now = new Date();
+                if (regStart && now < regStart) {
+                    const container = document.getElementById('registration-countdown');
+                    if (container) container.style.display = 'block';
+                    updateRegCountdown(regStart, 'Registration Starts In');
+                    setInterval(() => updateRegCountdown(regStart, 'Registration Starts In'), 1000);
+                } else if (regEnd && now < regEnd) {
+                    const container = document.getElementById('registration-countdown');
+                    if (container) container.style.display = 'block';
+                    updateRegCountdown(regEnd, 'Registration Ends In');
+                    setInterval(() => updateRegCountdown(regEnd, 'Registration Ends In'), 1000);
+                }
+            } catch (e) {
+                // ignore errors
+            }
+        })();
+    </script>
+
+    </body>
 </html>
             
     <!-- Footer -->
@@ -431,7 +574,7 @@
                             For technical support, contact your local election office
                         </p>
                         <p class="text-white opacity-50 small mb-0">
-                            © 2024 Ethiopian Vote System - Building Democracy Through Technology
+                            © 2018 Ethiopian Vote System - Building Democracy Through Technology
                         </p>
                     </div>
                 </div>

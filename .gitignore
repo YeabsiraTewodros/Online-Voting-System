@@ -2,6 +2,9 @@
 node_modules/
 
 # Environment variables
+cookies.txt
+uploads/
+README.md
 .env
 .DS_Store
 # Logs

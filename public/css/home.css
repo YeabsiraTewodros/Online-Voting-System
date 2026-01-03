@@ -1,5 +1,3 @@
-/* Ethiopian Vote System - Home Page Specific Styles */
-
 /* ===== RESET AND BASE STYLES ===== */
 * {
   box-sizing: border-box;
@@ -127,7 +125,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .text-muted {
-  color: #6c757d !important;
+  color: rgb(15, 1, 1) !important;
 }
 
 /* ===== SPACING ===== */
@@ -524,7 +522,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .features-section {
-  background: #f8f9fa;
+  background: #a2bfc7;
   padding: 5rem 0;
 }
 

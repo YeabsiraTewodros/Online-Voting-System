@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Database Reset Not Allowed - Ethiopian Vote System</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/reset_error.css">
+</head>
+<body>
+  <div class="container">
+    <div class="error-container">
+      <div class="error-icon">
+        <i class="fas fa-exclamation-triangle"></i>
+      </div>
+      <h2 class="error-title">Database Reset Not Allowed</h2>
+
+      <div class="warning-box">
+        <h5><i class="fas fa-info-circle"></i> Voting Period is Currently Active</h5>
+        <p>The database reset feature is disabled while the voting period is open to protect the integrity of the election data.</p>
+        <ul>
+          <li>All voters are currently able to cast their votes</li>
+          <li>Resetting the database would delete all votes and voter data</li>
+          <li>This action is only permitted when voting is closed</li>
+        </ul>
+      </div>
+
+      <p class="error-message">
+        To perform a database reset, you must first close the voting period using the "Set Election Period" feature.
+        Once the voting period is closed, you can safely reset the database.
+      </p>
+
+      <a href="/admin/login" class="btn-primary">
+        <i class="fas fa-arrow-left"></i> Back to Admin Panel
+      </a>
+    </div>
+  </div>
+</body>
+</html>

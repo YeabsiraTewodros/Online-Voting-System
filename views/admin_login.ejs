@@ -4,9 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Login</title>
-  <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <!-- Custom Styles -->
   <link rel="stylesheet" href="/css/styles.css">
 </head>
 <body class="bg-gradient-primary min-vh-100">
@@ -22,7 +20,7 @@
           </div>
           <div class="card-body p-4">
             <% if (isLoggedIn) { %>
-              <!-- Admin Dashboard -->
+              <!-- Admin Dashboard Welcome -->
               <div class="text-center mb-4">
                 <h4 class="text-success">
                   <i class="fas fa-check-circle me-2"></i>Welcome, Admin!
@@ -43,7 +41,18 @@
                 <small class="text-muted">Voters <%= votePeriodOpen ? 'can' : 'cannot' %> cast their votes.</small>
               </div>
 
-
+              <!-- Registration Period Status -->
+              <div class="alert <%= registrationPeriodOpen ? 'alert-success' : 'alert-secondary' %> mb-4">
+                <h5 class="alert-heading">
+                  <i class="fas fa-user-plus me-2"></i>Registration Period
+                </h5>
+                <p class="mb-2">
+                  Current Status: <strong class="<%= registrationPeriodOpen ? 'text-white' : 'text-dark' %>">
+                    <%= registrationPeriodOpen ? 'OPEN' : 'CLOSED' %>
+                  </strong>
+                </p>
+                <small class="text-light"><%= registrationPeriodOpen ? 'Admins may register voters now.' : 'Voter registration is not currently open.' %></small>
+              </div>
 
               <!-- Admin Actions -->
               <div class="row g-2 mb-3">
@@ -63,6 +72,16 @@
                     <i class="fas fa-calendar-alt me-2"></i>Set Election Period
                   </a>
                 </div>
+                <div class="col-12">
+                  <a href="/admin/registration-period" class="btn btn-outline-primary w-100">
+                    <i class="fas fa-calendar-alt me-2"></i>Set Registration Period
+                  </a>
+                </div>
+                <div class="col-12">
+                  <a href="/admin/parties" class="btn btn-outline-warning w-100">
+                    <i class="fas fa-flag me-2"></i>Manage Parties
+                  </a>
+                </div>
                 <% } %>
                 <% if (adminRole === 'super_admin') { %>
                 <div class="col-12">
@@ -73,6 +92,13 @@
                 <div class="col-12">
                   <a href="/admin/register-admin" class="btn btn-outline-success w-100">
                     <i class="fas fa-user-plus me-2"></i>Register Admin
+                  </a>
+                </div>
+                <% } %>
+                <% if (adminRole === 'super_admin' && adminId === 1) { %>
+                <div class="col-12">
+                  <a href="/admin/reset-database" class="btn btn-outline-danger w-100" onclick="return confirm('⚠️ DANGER: This will permanently delete ALL data except your account. Are you absolutely sure you want to reset the entire database? This action cannot be undone!')">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Reset Database
                   </a>
                 </div>
                 <% } %>
@@ -142,20 +168,6 @@
         passwordIcon.classList.add('fa-eye');
       }
     });
-
-    // Confirm toggle function for admin dashboard
-    function confirmToggle() {
-      const confirmCheckbox = document.getElementById('confirmToggle');
-      if (!confirmCheckbox.checked) {
-        alert('Please check the confirmation box to proceed.');
-        return false;
-      }
-
-      const isOpening = document.querySelector('button[type="submit"]').textContent.includes('Open');
-      const action = isOpening ? 'open' : 'close';
-
-      return confirm(`Are you sure you want to ${action} the vote period? This will ${isOpening ? 'allow' : 'prevent'} voters from casting their votes.`);
-    }
   </script>
 </body>
 </html>

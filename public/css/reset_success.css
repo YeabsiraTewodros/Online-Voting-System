@@ -1,0 +1,54 @@
+.success-container {
+      max-width: 600px;
+      margin: 50px auto;
+      padding: 30px;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      text-align: center;
+    }
+    .success-icon {
+      color: #28a745;
+      font-size: 64px;
+      margin-bottom: 20px;
+    }
+    .success-title {
+      color: #28a745;
+      font-size: 24px;
+      font-weight: bold;
+      margin-bottom: 20px;
+    }
+    .success-message {
+      margin-bottom: 30px;
+      line-height: 1.6;
+    }
+    .back-btn {
+      background: #007bff;
+      color: white;
+      padding: 12px 30px;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      text-decoration: none;
+      display: inline-block;
+    }
+    .back-btn:hover {
+      background: #0056b3;
+      color: white;
+      text-decoration: none;
+    }
+    .reset-details {
+      background: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 5px;
+      padding: 15px;
+      margin-bottom: 20px;
+      text-align: left;
+    }
+    .reset-details ul {
+      margin: 0;
+      padding-left: 20px;
+    }
+    .reset-details li {
+      margin-bottom: 5px;
+    }

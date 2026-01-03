@@ -12,12 +12,15 @@
   "dependencies": {
     "bcryptjs": "^3.0.3",
     "bootstrap": "^5.3.8",
+    "connect-redis": "^9.0.0",
     "cookie-parser": "^1.4.7",
     "csurf": "^1.11.0",
     "dotenv": "^16.4.5",
     "ejs": "^3.1.10",
     "express": "^4.19.2",
     "express-session": "^1.18.2",
-    "pg": "^8.11.5"
+    "multer": "^2.0.2",
+    "pg": "^8.11.5",
+    "redis": "^5.10.0"
   }
 }

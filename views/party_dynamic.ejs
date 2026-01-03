@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ethiopian Political Parties - Vote System</title>
+    <link rel="icon" href="images/vote.png" type="image/png">
+    <link rel="stylesheet" href="party.css ">
+
+</head>
+<body>
+    <!-- Navigation Header -->
+    <nav class="custom-navbar">
+        <div class="custom-container">
+            <a class="custom-navbar-brand custom-d-flex custom-align-items-center" href="/">
+                <img src="images/vote.png" alt="Vote System" width="40" height="40" class="custom-me-2">
+                <span class="custom-fw-bold">Ethiopian Vote System</span>
+            </a>
+            <button class="custom-navbar-toggler" type="button">
+                <span>☰</span>
+            </button>
+            <div class="custom-navbar-collapse">
+                <ul class="custom-navbar-nav">
+                    <li class="custom-nav-item">
+                        <a class="custom-nav-link" href="/">Home</a>
+                    </li>
+                    <li class="custom-nav-item">
+                        <a class="custom-nav-link active" href="/party.html">Parties</a>
+                    </li>
+                    <li class="custom-nav-item">
+                        <a class="custom-nav-link" href="/results">Results</a>
+                    </li>
+                    <li class="custom-nav-item">
+                        <a class="custom-nav-link" href="/login">Voter Login</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero-section custom-py-5">
+        <div class="custom-container">
+            <div class="custom-row custom-align-items-center">
+                <div class="custom-col-lg-8">
+                    <h1 class="custom-display-4 custom-fw-bold custom-mb-3">Ethiopian Political Parties</h1>
+                    <p class="custom-lead custom-mb-4">የፖለቲካ ፓርቲዎች ዝርዝር</p>
+                    <p class="custom-mb-4">Explore the major political parties shaping Ethiopia's democratic future. Learn about their ideologies, leaders, and platforms.</p>
+                </div>
+                <div class="custom-col-lg-4">
+                    <div class="hero-stats glass-morphism custom-p-4 custom-text-center">
+                        <h3 class="custom-h2 custom-fw-bold custom-text-primary custom-mb-3"><%= parties.length %></h3>
+                        <p class="custom-mb-0">Major Parties</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="custom-container custom-py-5">
+        <!-- Party Cards Grid -->
+        <div class="custom-row custom-g-4">
+            <% parties.forEach((party, index) => { %>
+            <div class="custom-col-lg-3">
+                <div class="party-card custom-h-100 custom-shadow-lg custom-border-0 custom-overflow-hidden" data-party="<%= party.name_english.toLowerCase().replace(/\s+/g, '') %>">
+                    <div class="custom-card-header custom-bg-gradient-primary custom-text-white custom-text-center custom-py-4">
+                        <div class="party-logo custom-mb-3">
+                            <% if (party.logo_url) { %>
+                                <img src="<%= party.logo_url %>" alt="<%= party.name_english %> Logo" class="custom-img-fluid custom-rounded-circle" style="width: 100px; height: 100px; object-fit: cover;">
+                            <% } else { %>
+                                <div style="width: 100px; height: 100px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                    <i class="fas fa-flag fa-2x" style="color: white;"></i>
+                                </div>
+                            <% } %>
+                        </div>
+                        <h2 class="custom-h2 custom-fw-bold custom-mb-1"><%= party.name_english %></h2>
+                        <p class="custom-mb-0 custom-small custom-opacity-75"><%= party.name_amharic %></p>
+                    </div>
+                    <div class="custom-card-body custom-p-4">
+                        <div class="ideology-section custom-mb-4">
+                            <h5 class="custom-text-primary custom-fw-bold custom-mb-2">
+                                <i class="fas fa-compass custom-me-2"></i>Ideology
+                            </h5>
+                            <p class="custom-text-muted custom-small custom-mb-0">
+                                <%= party.ideology %>
+                            </p>
+                        </div>
+
+                        <div class="leader-section custom-mb-4">
+                            <h5 class="custom-text-primary custom-fw-bold custom-mb-3">
+                                <i class="fas fa-user-tie custom-me-2"></i>Leader
+                            </h5>
+                            <div class="custom-d-flex custom-align-items-center">
+                                <% if (party.leader_image_url) { %>
+                                    <img src="<%= party.leader_image_url %>" alt="<%= party.leader_name_english %>" class="leader-avatar custom-rounded-circle custom-me-3" style="width: 100px; height: 100px; object-fit: cover;">
+                                <% } else { %>
+                                    <div class="leader-avatar custom-rounded-circle custom-me-3" style="width: 100px; height: 100px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center;">
+                                        <i class="fas fa-user fa-2x" style="color: white;"></i>
+                                    </div>
+                                <% } %>
+                                <div>
+                                    <h6 class="custom-mb-0 custom-fw-bold"><%= party.leader_name_english %></h6>
+                                    <p class="custom-text-muted custom-small custom-mb-0"><%= party.leader_name_amharic %></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="description-section">
+                            <h5 class="custom-text-primary custom-fw-bold custom-mb-2">
+                                <i class="fas fa-info-circle custom-me-2"></i>Description
+                            </h5>
+                            <p class="custom-text-muted custom-small">
+                                <%= party.description_english %>
+                            </p>
+                            <p class="custom-text-muted custom-small">
+                                <%= party.description_amharic %>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <% }); %>
+        </div>
+    </div>
+
+    <!-- Party Detail Modal -->
+    <div id="partyModal" class="custom-modal">
+        <div class="custom-modal-content">
+            <span class="custom-close">&times;</span>
+            <div class="custom-modal-header">
+                <img src="" alt="Party Logo" class="custom-modal-logo">
+                <h2 class="custom-modal-title"></h2>
+                <span class="custom-badge custom-modal-badge"></span>
+            </div>
+            <div class="custom-modal-body">
+                <div class="custom-modal-section">
+                    <h4><i class="fas fa-compass"></i> Ideology</h4>
+                    <p class="custom-modal-ideology"></p>
+                </div>
+                <div class="custom-modal-section">
+                    <h4><i class="fas fa-user-tie"></i> Leader</h4>
+                    <div class="custom-modal-leader-info">
+                        <img src="" alt="Leader" class="custom-modal-leader-image">
+                        <div>
+                            <h5 class="custom-modal-leader-name"></h5>
+                        </div>
+                    </div>
+                </div>
+                <div class="custom-modal-section">
+                    <h4><i class="fas fa-info-circle"></i> Description</h4>
+                    <div class="custom-modal-description"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="custom-footer">
+        <div class="custom-container">
+            <p class="custom-mb-0">&copy; 2018 Ethiopian Vote System. </p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script src="js/party.js"></script>
+
+</body>
+</html>

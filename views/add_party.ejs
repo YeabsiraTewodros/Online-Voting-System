@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Add New Party - Ethiopian Vote System</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/add_party.css">
+</head>
+<body>
+  <div class="form-container">
+    <h1 style="text-align: center; margin-bottom: 2rem; color: #495057;">
+      <i class="fas fa-plus-circle"></i> Add New Political Party
+    </h1>
+
+    <form action="/admin/parties/add" method="POST" enctype="multipart/form-data">
+      <!-- Party Names -->
+      <div class="form-section">
+        <h3 class="section-title"><i class="fas fa-flag"></i> Party Names</h3>
+        <div class="form-group">
+          <label class="form-label">Party Name (English) <span class="required">*</span></label>
+          <input type="text" class="form-control" name="name_english" required>
+          <div class="form-text">Enter the party's name in English</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Party Name (Amharic) <span class="required">*</span></label>
+          <input type="text" class="form-control" name="name_amharic" required>
+          <div class="form-text">Enter the party's name in Amharic</div>
+        </div>
+      </div>
+      
+      <!-- Leader Information -->
+      <div class="form-section">
+        <h3 class="section-title"><i class="fas fa-user-tie"></i> Leader Information</h3>
+        <div class="form-group">
+          <label class="form-label">Leader Name (English) <span class="required">*</span></label>
+          <input type="text" class="form-control" name="leader_name_english" required>
+          <div class="form-text">Enter the party leader's name in English</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Leader Name (Amharic) <span class="required">*</span></label>
+          <input type="text" class="form-control" name="leader_name_amharic" required>
+          <div class="form-text">Enter the party leader's name in Amharic</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Leader Image</label>
+          <div class="mb-2">
+            <label class="form-label small">Option 1: Image URL</label>
+            <input type="url" class="form-control" name="leader_image_url" id="leader_image_url" placeholder="https://example.com/leader-image.jpg">
+            <div class="form-text">Enter URL for the leader's image</div>
+          </div>
+          <div class="mb-2">
+            <label class="form-label small">Option 2: Upload Image File</label>
+            <input type="file" class="form-control" name="leader_image_file" id="leader_image_file" accept="image/*">
+            <div class="form-text">Upload an image file (JPG, PNG, GIF)</div>
+          </div>
+          <div class="form-text text-muted">Choose either URL or upload file. If both are provided, file upload takes priority.</div>
+          <div id="leader_image_preview" class="image-preview" style="display: none; margin-top: 1rem;">
+            <img id="leader_preview_img" src="" alt="Leader Image Preview" style="width: 300px; height: 300px; border: 1px solid #ddd; border-radius: 0px; object-fit: contain;">
+          </div>
+        </div>
+      </div>
+
+      <!-- Party Details -->
+      <div class="form-section">
+        <h3 class="section-title"><i class="fas fa-info-circle"></i> Party Details</h3>
+        <div class="form-group">
+          <label class="form-label">Ideology <span class="required">*</span></label>
+          <input type="text" class="form-control" name="ideology" required>
+          <div class="form-text">Enter the party's political ideology (e.g., Social Justice, Federalism)</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Description (English) <span class="required">*</span></label>
+          <textarea class="form-control" name="description_english" rows="4" required></textarea>
+          <div class="form-text">Provide a detailed description of the party in English</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Description (Amharic) <span class="required">*</span></label>
+          <textarea class="form-control" name="description_amharic" rows="4" required></textarea>
+          <div class="form-text">Provide a detailed description of the party in Amharic</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Party Logo</label>
+          <div class="mb-2">
+            <label class="form-label small">Option 1: Logo URL</label>
+            <input type="url" class="form-control" name="logo_url" placeholder="https://example.com/logo.jpg">
+            <div class="form-text">Enter URL for the party's logo image</div>
+          </div>
+          <div class="mb-2">
+            <label class="form-label small">Option 2: Upload Logo File</label>
+            <input type="file" class="form-control" name="logo_file" accept="image/*">
+            <div class="form-text">Upload a logo image file (JPG, PNG, GIF)</div>
+          </div>
+          <div class="form-text text-muted">Choose either URL or upload file. If both are provided, file upload takes priority.</div>
+        </div>
+      </div>
+
+      <!-- Form Actions -->
+      <div style="text-align: center; margin-top: 2rem;">
+        <button type="submit" class="btn-submit">
+          <i class="fas fa-save"></i> Add Party
+        </button>
+        <a href="/parties" class="btn-cancel" style="margin-right: 1rem;">
+          <i class="fas fa-info-circle"></i> About Parties
+        </a>
+        <a href="/admin/parties" class="btn-cancel">
+          <i class="fas fa-times"></i> Cancel
+        </a>
+      </div>
+    </form>
+  </div>
+
+  <script>
+    // Image preview functionality
+    function updateImagePreview(input, previewImg, previewContainer) {
+      const file = input.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          previewImg.src = e.target.result;
+          previewContainer.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    // Leader image preview
+    document.getElementById('leader_image_file').addEventListener('change', function() {
+      updateImagePreview(this, document.getElementById('leader_preview_img'), document.getElementById('leader_image_preview'));
+    });
+
+    // URL input preview for leader image
+    document.getElementById('leader_image_url').addEventListener('input', function() {
+      const url = this.value.trim();
+      const previewImg = document.getElementById('leader_preview_img');
+      const previewContainer = document.getElementById('leader_image_preview');
+      if (url) {
+        previewImg.src = url;
+        previewContainer.style.display = 'block';
+      } else {
+        previewContainer.style.display = 'none';
+      }
+    });
+  </script>
+</body>
+</html>

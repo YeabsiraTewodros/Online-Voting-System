@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Political Parties - Ethiopian Vote System</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/parties.css">
+</head>
+<body>
+  <!-- Hero Section -->
+  <section class="parties-hero">
+    <div class="container">
+      <h1 class="display-4 fw-bold mb-3">
+        <i class="fas fa-flag"></i>
+        Political Parties
+      </h1>
+      <p class="lead mb-4">Learn about the political parties participating in the Ethiopian Vote System</p>
+    </div>
+  </section>
+
+  <!-- Parties Container -->
+  <div class="container parties-container">
+    <% if (parties.length === 0) { %>
+      <div class="no-parties">
+        <i class="fas fa-flag fa-4x mb-4"></i>
+        <h2>No Political Parties</h2>
+        <p>Political parties information will be displayed here once added by the system administrator.</p>
+      </div>
+    <% } else { %>
+      <% parties.forEach(party => { %>
+        <div class="party-card">
+          <div class="party-header">
+            <% if (party.logo_url) { %>
+              <img src="<%= party.logo_url %>" alt="<%= party.name_english %> Logo" class="party-logo">
+            <% } else { %>
+              <div class="party-logo" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center;">
+                <i class="fas fa-flag fa-3x" style="color: white;"></i>
+              </div>
+            <% } %>
+            <h2 class="party-name"><%= party.name_english %></h2>
+            <div class="party-name-amharic"><%= party.name_amharic %></div>
+            <div class="party-leader">
+              <i class="fas fa-user-tie"></i> <%= party.leader_name_english %>
+            </div>
+          </div>
+
+          <div class="party-content">
+            <div class="party-description">
+              <%= party.description_english %>
+            </div>
+
+            <div class="party-details">
+              <div class="detail-item">
+                <div class="detail-label">Ideology</div>
+                <div class="detail-value"><%= party.ideology %></div>
+              </div>
+              <div class="detail-item">
+                <div class="detail-label">Leader (Amharic)</div>
+                <div class="detail-value"><%= party.leader_name_amharic %></div>
+              </div>
+              <div class="detail-item">
+                <div class="detail-label">Description (Amharic)</div>
+                <div class="detail-value"><%= party.description_amharic %></div>
+              </div>
+            </div>
+
+            <% if (party.leader_image_url) { %>
+              <div class="leader-section">
+                <img src="<%= party.leader_image_url %>" alt="<%= party.leader_name_english %>" class="leader-image">
+                <div class="leader-name"><%= party.leader_name_english %></div>
+                <div class="leader-name-amharic"><%= party.leader_name_amharic %></div>
+              </div>
+            <% } %>
+          </div>
+        </div>
+      <% }); %>
+    <% } %>
+
+    <div style="text-align: center;">
+      <a href="/party.html" class="back-btn" style="margin-right: 1rem;">
+        <i class="fas fa-info-circle"></i> About Parties
+      </a>
+      <a href="/" class="back-btn">
+        <i class="fas fa-home"></i> Back to Home
+      </a>
+    </div>
+  </div>
+</body>
+</html>

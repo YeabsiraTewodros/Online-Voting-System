@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reset Database - Ethiopian Vote System</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/reset_database.css">
+</head>
+<body>
+  <div class="container">
+    <div class="reset-container">
+      <div class="warning-icon">
+        <i class="fas fa-exclamation-triangle"></i>
+      </div>
+      <h2 class="warning-title">Danger Zone: Database Reset</h2>
+
+      <div class="warning-message">
+        <strong>WARNING:</strong> This action will permanently delete ALL data from the system except the original super admin account. This cannot be undone.
+      </div>
+
+      <div class="reset-details">
+        <strong>The following data will be permanently deleted:</strong>
+        <ul>
+          <li>All registered voters and their information</li>
+          <li>All votes cast in the system</li>
+          <li>All political parties (except default parties)</li>
+          <li>All admin users (except original super admin)</li>
+          <li>All audit logs and activity logs</li>
+          <li>All system settings and configurations</li>
+        </ul>
+        <strong>Data that will be restored:</strong>
+        <ul>
+          <li>Default political parties</li>
+          <li>System configuration defaults</li>
+          <li>Original super admin account</li>
+        </ul>
+      </div>
+
+      <form method="POST" action="/admin/reset-database">
+        <div class="form-group">
+          <label class="form-label" for="confirm_reset">
+            Type "RESET_ALL_DATA" to confirm:
+          </label>
+          <input type="text" id="confirm_reset" name="confirm_reset" class="form-control"
+                 placeholder="RESET_ALL_DATA" required>
+          <small style="color: #6c757d; margin-top: 5px; display: block;">
+            This confirmation code is required to prevent accidental resets.
+          </small>
+        </div>
+
+        <button type="submit" class="btn-reset">
+          <i class="fas fa-trash-alt"></i> Reset Entire Database
+        </button>
+      </form>
+
+      <a href="/admin/login" class="btn-cancel">
+        <i class="fas fa-times"></i> Cancel - Return to Admin Panel
+      </a>
+    </div>
+  </div>
+</body>
+</html>

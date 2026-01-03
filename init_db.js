@@ -1,6 +1,6 @@
 const { Pool } = require('pg');
 const fs = require('fs');
-
+require('dotenv').config();
 // PostgreSQL connection to default database first
 const pool = new Pool({
   user: process.env.DB_USER || 'postgres',
@@ -61,7 +61,7 @@ async function initializeDatabase() {
     console.log('✅ Database schema initialized successfully!');
     console.log('📋 Default Admin Credentials:');
     console.log('   Username: admin');
-    console.log('   Password: admin_password');
+    console.log('   Password: **************');
     console.log('   Role: super_admin');
     console.log('');
     console.log('🎯 Ready to start the server with: npm start');

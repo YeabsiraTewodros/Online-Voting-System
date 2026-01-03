@@ -3,71 +3,116 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Vote</title>
+  <title>Vote - Ethiopian Election System</title>
   <link rel="stylesheet" href="/css/styles.css">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/vote.css">
 </head>
 <body>
-  <h1>Vote for Your Party</h1>
-  <%
-  const partyImages = {
-    'Prosperity Party (ብልጽግና ፓርቲ)': '/images/pp.png',
-    'Ethiopian Citizens for Social Justice - EZEMA (የኢትዮጵያ ዜጎች ለማኅበራዊ ፍትህ(ኢዜማ))': '/images/ezema.png',
-    'National Movement of Amhara (NaMA) የአማራ ብሔራዊ ንቅናቄ(አብን)': '/images/NaMA.png',
-    'Oromo Federalist Congress (OFC) ኦሮሞ ፌዴራሊስት ኮንግረስ(ኦፌኮ)': '/images/ofc.png'
-  };
+  <div class="vote-header">
+    <h1><i class="fas fa-vote-yea me-3"></i>Cast Your Vote</h1>
+    <p>Choose your preferred political party for the Ethiopian elections</p>
+    <div class="party-count">
+      <i class="fas fa-users me-2"></i><%= parties.length %> Parties Participating
+    </div>
+  </div>
 
-  const partyLeaders = {
-    'Prosperity Party (ብልጽግና ፓርቲ)': {
-      image: '/images/Abiy_Ahmed_Ali.png',
-      name: 'Prime Minister Abiy Ahmed',
-      nameAmharic: 'ጠቅላይ ሚኒስትር ዐቢይ አሕመድ',
-      description: 'Prime Minister of Ethiopia and leader of the Prosperity Party.'
-    },
-    'Ethiopian Citizens for Social Justice - EZEMA (የኢትዮጵያ ዜጎች ለማኅበራዊ ፍትህ(ኢዜማ))': {
-      image: '/images/Birhanu_Nega.png',
-      name: 'Berhanu Nega',
-      nameAmharic: 'በርሃኑ ነጋ',
-      description: 'Economist and opposition leader, former mayor of Addis Ababa.'
-    },
-    'National Movement of Amhara (NaMA) የአማራ ብሔራዊ ንቅናቄ(አብን)': {
-      image: '/images/Belete_Molla_Getahun.png',
-      name: 'Desalagne Chanie',
-      nameAmharic: 'ደሳላኝ ቻኒዬ',
-      description: 'Amhara nationalist leader and former parliament member.'
-    },
-    'Oromo Federalist Congress (OFC) ኦሮሞ ፌዴራሊስት ኮንግረስ(ኦፌኮ)': {
-      image: '/images/Merera_Gudina.png',
-      name: 'Obbo Merera Gudina',
-      nameAmharic: 'ኦቦ መረራ ጉዲና',
-      description: 'Oromo political leader and advocate for federalist reforms.'
-    }
-  };
-  %>
-  <form action="/vote" method="POST">
-    <div class="party-container">
+  <form action="/vote" method="POST" id="voteForm">
+    <div class="party-grid">
       <% parties.forEach((party, index) => { %>
-        <div class="party-card">
-          <input type="radio" id="<%= party %>" name="party" value="<%= party %>" required>
-          <label for="<%= party %>">
-            <img src="<%= partyImages[party] || 'https://via.placeholder.com/200x150?text=No+Image' %>" alt="<%= party %>">
-            <div class="party-name"><%= party %></div>
-          </label>
-          <% if (partyLeaders[party]) { %>
-            <div class="leader-tooltip">
-              <img src="<%= partyLeaders[party].image %>" alt="<%= partyLeaders[party].name %>" class="leader-tooltip-image">
-              <div class="leader-tooltip-content">
-                <h4><%= partyLeaders[party].name %></h4>
-                <p class="amharic-name"><%= partyLeaders[party].nameAmharic %></p>
-                <p><%= partyLeaders[party].description %></p>
-              </div>
+        <div class="party-card fade-in-up">
+          <input type="radio" id="party_<%= index %>" name="party" value="<%= party.displayName %>" class="party-radio" required>
+          <label for="party_<%= index %>" class="party-content">
+            <div class="party-logo-container">
+              <img src="<%= party.logo_url || 'https://via.placeholder.com/300x200?text=No+Logo' %>"
+                   alt="<%= party.name_english %> Logo" class="party-logo">
             </div>
-          <% } %>
+            <div class="party-info">
+              <div class="party-name">
+                <span class="party-name-english"><%= party.name_english %></span>
+                <span class="party-name-amharic"><%= party.name_amharic %></span>
+              </div>
+
+              <% if (party.leader_image_url || party.leader_name_english) { %>
+                <div class="party-leader">
+                  <% if (party.leader_image_url) { %>
+                    <img src="<%= party.leader_image_url %>"
+                         alt="<%= party.leader_name_english %>"
+                         class="leader-image">
+                  <% } %>
+                  <% if (party.leader_name_english) { %>
+                    <div class="leader-name"><%= party.leader_name_english %></div>
+                    <% if (party.leader_name_amharic) { %>
+                      <div class="leader-name-amharic"><%= party.leader_name_amharic %></div>
+                    <% } %>
+                  <% } %>
+                </div>
+              <% } %>
+
+              <% if (party.description_english) { %>
+                <div class="party-description">
+                  <%= party.description_english.length > 100 ? party.description_english.substring(0, 100) + '...' : party.description_english %>
+                </div>
+              <% } %>
+            </div>
+          </label>
         </div>
       <% }); %>
     </div>
-    <button type="submit">Submit Vote</button>
+
+    <div class="vote-button-container">
+      <button type="submit" class="vote-button" id="submitVote">
+        <i class="fas fa-check-circle me-2"></i>Submit My Vote
+      </button>
+    </div>
   </form>
-  <a href="/">Back to Home</a>
-  <a href="/party.html">About Parties</a>
+
+  <div class="navigation-links">
+    <a href="/" class="nav-link">
+      <i class="fas fa-home me-2"></i>Back to Home
+    </a>
+    <a href="/party.html" class="nav-link">
+      <i class="fas fa-info-circle me-2"></i>About Parties
+    </a>
+    <% if (isOriginalSuperAdmin) { %>
+      <a href="/admin/parties" class="nav-link">
+        <i class="fas fa-cog me-2"></i>Manage Parties
+      </a>
+    <% } %>
+    <a href="/results" class="nav-link">
+      <i class="fas fa-chart-bar me-2"></i>View Results
+    </a>
+  </div>
+
+  <script>
+    // Add visual feedback when party is selected
+    document.querySelectorAll('.party-radio').forEach(radio => {
+      radio.addEventListener('change', function() {
+        // Remove selected class from all cards
+        document.querySelectorAll('.party-card').forEach(card => {
+          card.classList.remove('selected');
+        });
+        // Add selected class to the clicked card
+        if (this.checked) {
+          this.closest('.party-card').classList.add('selected');
+        }
+      });
+    });
+
+    // Form validation
+    document.getElementById('voteForm').addEventListener('submit', function(e) {
+      const selectedParty = document.querySelector('input[name="party"]:checked');
+      if (!selectedParty) {
+        e.preventDefault();
+        alert('Please select a party before submitting your vote.');
+        return false;
+      }
+
+      // Disable button to prevent double submission
+      const submitButton = document.getElementById('submitVote');
+      submitButton.disabled = true;
+      submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Submitting...';
+    });
+  </script>
 </body>
 </html>

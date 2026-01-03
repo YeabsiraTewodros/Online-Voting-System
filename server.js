@@ -4,12 +4,14 @@ const bodyParser = require('body-parser');
 const bcrypt = require('bcryptjs');
 const { Pool } = require('pg');
 const ejs = require('ejs');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
 require('dotenv').config();
 
 // Helper function to check if voting is currently open
 function isVotingOpen() {
   const now = new Date();
-  // This will be replaced with database query in routes
   return false; // Placeholder
 }
 
@@ -32,8 +34,39 @@ app.use(session({
   resave: false,
   saveUninitialized: true,
 }));
-app.use(express.static('public'));
 app.set('view engine', 'ejs');
+
+// Configure multer for file uploads
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    const uploadDir = path.join(__dirname, 'public', 'uploads');
+    // Create uploads directory if it doesn't exist
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    cb(null, uploadDir);
+  },
+  filename: function (req, file, cb) {
+    // Generate unique filename with timestamp
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({
+  storage: storage,
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB limit
+  },
+  fileFilter: function (req, file, cb) {
+    // Check if file is an image
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed!'), false);
+    }
+  }
+});
 
 // Middleware to check admin authentication
 function requireAdmin(req, res, next) {
@@ -72,23 +105,41 @@ const parties = [
 
 // Routes
 app.get('/', (req, res) => {
-  const isSuperAdmin = req.session.isAdmin && req.session.adminRole === 'super_admin';
-  res.render('index', { isSuperAdmin });
+  (async () => {
+    try {
+      const result = await pool.query('SELECT registration_start_date, registration_end_date FROM admin_settings WHERE id = 1');
+      const settings = result.rows[0] || {};
+      const now = new Date();
+      const registrationPeriodOpen = settings.registration_start_date && settings.registration_end_date &&
+        now >= new Date(settings.registration_start_date) && now <= new Date(settings.registration_end_date);
+      const registrationStartDate = settings.registration_start_date ? new Date(settings.registration_start_date).toLocaleString() : '';
+      const registrationEndDate = settings.registration_end_date ? new Date(settings.registration_end_date).toLocaleString() : '';
+      const isSuperAdmin = req.session.isAdmin && req.session.adminRole === 'super_admin';
+      res.render('index', { isSuperAdmin, registrationPeriodOpen, registrationStartDate, registrationEndDate });
+    } catch (err) {
+      console.error('Error fetching registration settings for home page:', err);
+      const isSuperAdmin = req.session.isAdmin && req.session.adminRole === 'super_admin';
+      res.render('index', { isSuperAdmin, registrationPeriodOpen: false, registrationStartDate: '', registrationEndDate: '' });
+    }
+  })();
 });
 
 app.get('/admin/login', async (req, res) => {
   if (req.session.isAdmin) {
     try {
-      const result = await pool.query('SELECT election_start_date, election_end_date FROM admin_settings WHERE id = 1');
-      const settings = result.rows[0];
+      const result = await pool.query('SELECT election_start_date, election_end_date, registration_start_date, registration_end_date FROM admin_settings WHERE id = 1');
+      const settings = result.rows[0] || {};
       const now = new Date();
       const votePeriodOpen = settings.election_start_date && settings.election_end_date &&
                             now >= new Date(settings.election_start_date) &&
                             now <= new Date(settings.election_end_date);
-      res.render('admin_login', { isLoggedIn: true, votePeriodOpen, adminRole: req.session.adminRole || 'admin', adminId: req.session.adminId });
+      const registrationPeriodOpen = settings.registration_start_date && settings.registration_end_date &&
+                            now >= new Date(settings.registration_start_date) &&
+                            now <= new Date(settings.registration_end_date);
+      res.render('admin_login', { isLoggedIn: true, votePeriodOpen, registrationPeriodOpen, adminRole: req.session.adminRole || 'admin', adminId: req.session.adminId });
     } catch (err) {
       console.error(err);
-      res.render('admin_login', { isLoggedIn: true, votePeriodOpen: false, adminRole: req.session.adminRole || 'admin', adminId: req.session.adminId });
+      res.render('admin_login', { isLoggedIn: true, votePeriodOpen: false, registrationPeriodOpen: false, adminRole: req.session.adminRole || 'admin', adminId: req.session.adminId });
     }
   } else {
     res.render('admin_login', { isLoggedIn: false });
@@ -122,11 +173,11 @@ app.post('/admin/login', async (req, res) => {
         res.redirect('/admin/login');
       } else {
         console.log('Invalid password for admin:', username);
-        res.send('Invalid admin credentials');
+        res.redirect('/admin/login');
       }
     } else {
       console.log('Admin user not found:', username);
-      res.send('Invalid admin credentials');
+      res.redirect('/admin/login');
     }
   } catch (err) {
     console.error('Admin login error:', err);
@@ -153,10 +204,10 @@ app.post('/login', async (req, res) => {
           res.redirect('/vote');
         }
       } else {
-        res.send('Invalid credentials');
+        res.redirect('/login');
       }
     } else {
-      res.send('Invalid credentials');
+      res.redirect('/login');
     }
   } catch (err) {
     console.error(err);
@@ -217,7 +268,18 @@ app.get('/vote', async (req, res) => {
     if (voteCheck.rows.length > 0) {
       return res.send('You have already voted');
     }
-    res.render('vote', { parties });
+    // Fetch active parties from database
+    const partiesResult = await pool.query('SELECT * FROM parties WHERE is_active = TRUE ORDER BY name_english');
+    // Create display names for parties
+    const parties = partiesResult.rows.map(party => ({
+      ...party,
+      displayName: party.name_english + ' (' + party.name_amharic + ')'
+    }));
+
+    // Check if user is the original super admin (id = 1)
+    const isOriginalSuperAdmin = req.session.isAdmin && req.session.adminRole === 'super_admin' && req.session.adminId === 1;
+
+    res.render('vote', { parties, isOriginalSuperAdmin });
   } catch (err) {
     console.error(err);
     res.send('Error');
@@ -247,8 +309,10 @@ app.get('/results', async (req, res) => {
     const result = await pool.query('SELECT party, COUNT(*) as votes FROM votes GROUP BY party');
     const settingsResult = await pool.query('SELECT election_start_date, election_end_date FROM admin_settings WHERE id = 1');
     const votersResult = await pool.query('SELECT COUNT(*) as total_voters FROM voters WHERE is_active = TRUE');
+    const partiesResult = await pool.query('SELECT COUNT(*) as total_parties FROM parties WHERE is_active = TRUE');
     const settings = settingsResult.rows[0] || {};
     const totalVoters = parseInt(votersResult.rows[0].total_voters);
+    const totalParties = parseInt(partiesResult.rows[0].total_parties);
 
     // Prepare data for client-side JavaScript
     const resultsData = {
@@ -262,7 +326,7 @@ app.get('/results', async (req, res) => {
       results: result.rows,
       electionStartDate: settings.election_start_date || null,
       electionEndDate: settings.election_end_date || null,
-      totalParties: parties.length,
+      totalParties: totalParties,
       totalVoters: totalVoters,
       resultsDataJson: JSON.stringify(resultsData)
     });
@@ -273,7 +337,7 @@ app.get('/results', async (req, res) => {
       results: [],
       electionStartDate: null,
       electionEndDate: null,
-      totalParties: parties.length,
+      totalParties: 0,
       totalVoters: 0,
       resultsDataJson: JSON.stringify(fallbackData)
     });
@@ -287,6 +351,25 @@ app.get('/admin/register', requireAdmin, (req, res) => {
 app.post('/admin/register', requireAdmin, async (req, res) => {
   const { fullname, age, sex, region, zone, woreda, city_kebele, phone_number, finnumber } = req.body;
   try {
+    // Check registration and election periods
+    const settingsResult = await pool.query('SELECT election_start_date, election_end_date, registration_start_date, registration_end_date FROM admin_settings WHERE id = 1');
+    const settings = settingsResult.rows[0];
+    const now = new Date();
+
+    // Check if currently in election period
+    if (settings.election_start_date && settings.election_end_date &&
+        now >= new Date(settings.election_start_date) &&
+        now <= new Date(settings.election_end_date)) {
+      return res.render('registration_error', { errorMessage: 'Voter registration is not allowed during election period' });
+    }
+
+    // Check if registration period is set and current time is within it
+    if (settings.registration_start_date && settings.registration_end_date) {
+      if (now < new Date(settings.registration_start_date) || now > new Date(settings.registration_end_date)) {
+        return res.send('Voter registration is only allowed during the specified registration period');
+      }
+    }
+
     // Validate FIN number format: 1234-1234-1234 (12 digits with dashes)
     const finRegex = /^\d{4}-\d{4}-\d{4}$/;
     if (!finRegex.test(finnumber)) {
@@ -375,6 +458,77 @@ app.post('/admin/toggle', requireOriginalSuperAdmin, async (req, res) => {
   } catch (err) {
     console.error('Error setting election period:', err);
     res.send('Error updating election period');
+  }
+});
+
+// Close election period (clear dates)
+app.post('/admin/toggle/close', requireOriginalSuperAdmin, async (req, res) => {
+  try {
+    console.log(`Admin ${req.session.adminId} closing election period at ${new Date().toISOString()}`);
+    await pool.query('UPDATE admin_settings SET election_start_date = NULL, election_end_date = NULL WHERE id = 1');
+    res.redirect('/admin/login');
+  } catch (err) {
+    console.error('Error closing election period:', err);
+    res.send('Error closing election period');
+  }
+});
+
+// Registration Period Management Routes
+app.get('/admin/registration-period', requireOriginalSuperAdmin, async (req, res) => {
+  try {
+    const result = await pool.query('SELECT registration_start_date, registration_end_date FROM admin_settings WHERE id = 1');
+    const settings = result.rows[0];
+    res.render('registration_period', {
+      registrationStartDate: settings.registration_start_date ? new Date(settings.registration_start_date).toISOString().slice(0, 16) : '',
+      registrationEndDate: settings.registration_end_date ? new Date(settings.registration_end_date).toISOString().slice(0, 16) : ''
+    });
+  } catch (err) {
+    console.error(err);
+    res.render('registration_period', { registrationStartDate: '', registrationEndDate: '' });
+  }
+});
+
+app.post('/admin/registration-period', requireOriginalSuperAdmin, async (req, res) => {
+  const { registration_start_date, registration_end_date } = req.body;
+
+  // Validate that both dates are provided
+  if (!registration_start_date || !registration_end_date) {
+    return res.send('Both start and end dates are required.');
+  }
+
+  // Validate that start date is before end date
+  const startDate = new Date(registration_start_date);
+  const endDate = new Date(registration_end_date);
+  if (startDate >= endDate) {
+    return res.send('Start date must be before end date.');
+  }
+
+  try {
+    // Log the admin action for audit trail
+    console.log(`Admin ${req.session.adminId} setting registration period from ${registration_start_date} to ${registration_end_date} at ${new Date().toISOString()}`);
+
+    // Update the registration dates
+    await pool.query('UPDATE admin_settings SET registration_start_date = $1, registration_end_date = $2 WHERE id = 1', [startDate, endDate]);
+
+    // Log the successful action
+    console.log(`Registration period set by admin ${req.session.adminId} from ${startDate} to ${endDate}`);
+
+    res.redirect('/admin/login');
+  } catch (err) {
+    console.error('Error setting registration period:', err);
+    res.send('Error updating registration period');
+  }
+});
+
+// Reset registration period (clear dates)
+app.post('/admin/registration-period/reset', requireOriginalSuperAdmin, async (req, res) => {
+  try {
+    console.log(`Admin ${req.session.adminId} resetting registration period at ${new Date().toISOString()}`);
+    await pool.query('UPDATE admin_settings SET registration_start_date = NULL, registration_end_date = NULL WHERE id = 1');
+    res.redirect('/admin/registration-period');
+  } catch (err) {
+    console.error('Error resetting registration period:', err);
+    res.send('Error resetting registration period');
   }
 });
 
@@ -492,6 +646,261 @@ app.post('/admin/delete-admin/:id', requireSuperAdmin, async (req, res) => {
   }
 });
 
+// Party Management Routes
+app.get('/admin/parties', requireAdmin, async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM parties WHERE is_active = TRUE ORDER BY created_at DESC');
+    res.render('admin_parties', { parties: result.rows, isOriginalSuperAdmin: req.session.adminId === 1 });
+  } catch (err) {
+    console.error(err);
+    res.send('Error loading parties');
+  }
+});
+
+app.get('/admin/parties/add', requireOriginalSuperAdmin, (req, res) => {
+  res.render('add_party');
+});
+
+app.post('/admin/parties/add', requireOriginalSuperAdmin, upload.fields([
+  { name: 'leader_image_file', maxCount: 1 },
+  { name: 'logo_file', maxCount: 1 }
+]), async (req, res) => {
+  const {
+    name_english, name_amharic, leader_name_english, leader_name_amharic,
+    ideology, description_english, description_amharic, logo_url, leader_image_url
+  } = req.body;
+
+  try {
+    // Handle image uploads - prioritize uploaded files over URLs
+    let finalLeaderImageUrl = leader_image_url || null;
+    let finalLogoUrl = logo_url || null;
+
+    // If files were uploaded, use the uploaded file paths
+    if (req.files) {
+      if (req.files.leader_image_file && req.files.leader_image_file[0]) {
+        finalLeaderImageUrl = '/uploads/' + req.files.leader_image_file[0].filename;
+      }
+      if (req.files.logo_file && req.files.logo_file[0]) {
+        finalLogoUrl = '/uploads/' + req.files.logo_file[0].filename;
+      }
+    }
+
+    await pool.query(`
+      INSERT INTO parties (
+        name_english, name_amharic, leader_name_english, leader_name_amharic,
+        ideology, description_english, description_amharic, logo_url, leader_image_url, is_active, created_by
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+    `, [
+      name_english, name_amharic, leader_name_english, leader_name_amharic,
+      ideology, description_english, description_amharic, finalLogoUrl, finalLeaderImageUrl, true, req.session.adminId
+    ]);
+
+    console.log(`Original super admin ${req.session.adminId} added new party: ${name_english}`);
+    res.redirect('/admin/parties');
+  } catch (err) {
+    console.error('Error adding party:', err);
+    res.send('Error adding party');
+  }
+});
+
+app.get('/admin/parties/edit/:id', requireOriginalSuperAdmin, async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM parties WHERE id = $1', [req.params.id]);
+    if (result.rows.length === 0) {
+      return res.send('Party not found');
+    }
+    res.render('edit_party', { party: result.rows[0] });
+  } catch (err) {
+    console.error(err);
+    res.send('Error loading party');
+  }
+});
+
+app.post('/admin/parties/edit/:id', requireOriginalSuperAdmin, upload.fields([
+  { name: 'leader_image_file', maxCount: 1 },
+  { name: 'logo_file', maxCount: 1 }
+]), async (req, res) => {
+  const {
+    name_english, name_amharic, leader_name_english, leader_name_amharic,
+    ideology, description_english, description_amharic, logo_url, leader_image_url
+  } = req.body;
+
+  try {
+    // Get current party data to preserve existing images if not being updated
+    const currentParty = await pool.query('SELECT logo_url, leader_image_url FROM parties WHERE id = $1', [req.params.id]);
+    if (currentParty.rows.length === 0) {
+      return res.send('Party not found');
+    }
+
+    // Handle image uploads - prioritize uploaded files over URLs, keep existing if neither provided
+    let finalLeaderImageUrl = currentParty.rows[0].leader_image_url;
+    let finalLogoUrl = currentParty.rows[0].logo_url;
+
+    // If URL is provided and not empty, use it
+    if (leader_image_url && leader_image_url.trim() !== '') {
+      finalLeaderImageUrl = leader_image_url.trim();
+    }
+    if (logo_url && logo_url.trim() !== '') {
+      finalLogoUrl = logo_url.trim();
+    }
+
+    // If files were uploaded, use the uploaded file paths (takes priority)
+    if (req.files) {
+      if (req.files.leader_image_file && req.files.leader_image_file[0]) {
+        finalLeaderImageUrl = '/uploads/' + req.files.leader_image_file[0].filename;
+      }
+      if (req.files.logo_file && req.files.logo_file[0]) {
+        finalLogoUrl = '/uploads/' + req.files.logo_file[0].filename;
+      }
+    }
+
+    await pool.query(`
+      UPDATE parties SET
+        name_english = $1, name_amharic = $2, leader_name_english = $3, leader_name_amharic = $4,
+        ideology = $5, description_english = $6, description_amharic = $7,
+        logo_url = $8, leader_image_url = $9, updated_at = CURRENT_TIMESTAMP
+      WHERE id = $10
+    `, [
+      name_english, name_amharic, leader_name_english, leader_name_amharic,
+      ideology, description_english, description_amharic, finalLogoUrl, finalLeaderImageUrl, req.params.id
+    ]);
+
+    console.log(`Original super admin ${req.session.adminId} updated party: ${name_english}`);
+    res.redirect('/admin/parties');
+  } catch (err) {
+    console.error('Error updating party:', err);
+    res.send('Error updating party');
+  }
+});
+
+app.post('/admin/parties/delete/:id', requireOriginalSuperAdmin, async (req, res) => {
+  try {
+    // Check if party exists
+    const party = await pool.query('SELECT * FROM parties WHERE id = $1', [req.params.id]);
+    if (party.rows.length === 0) {
+      return res.send('Party not found');
+    }
+
+    // Delete the party
+    await pool.query('DELETE FROM parties WHERE id = $1', [req.params.id]);
+
+    console.log(`Original super admin ${req.session.adminId} deleted party: ${party.rows[0].name_english}`);
+    res.redirect('/admin/parties');
+  } catch (err) {
+    console.error('Error deleting party:', err);
+    res.send('Error deleting party');
+  }
+});
+
+// Database Reset Route - Only for Original Super Admin
+app.get('/admin/reset-database', requireOriginalSuperAdmin, async (req, res) => {
+  try {
+    // Check if voting period is currently open
+    const result = await pool.query('SELECT election_start_date, election_end_date FROM admin_settings WHERE id = 1');
+    const settings = result.rows[0];
+    const now = new Date();
+    const votePeriodOpen = settings && settings.election_start_date && settings.election_end_date &&
+                          now >= new Date(settings.election_start_date) &&
+                          now <= new Date(settings.election_end_date);
+
+    if (votePeriodOpen) {
+      return res.render('reset_error');
+    }
+
+    res.render('reset_database');
+  } catch (err) {
+    console.error('Error checking voting period:', err);
+    res.send('Error checking voting period status');
+  }
+});
+
+app.post('/admin/reset-database', requireOriginalSuperAdmin, async (req, res) => {
+  const { confirm_reset } = req.body;
+
+  if (confirm_reset !== 'RESET_ALL_DATA') {
+    return res.send('Invalid confirmation code. Database reset cancelled.');
+  }
+
+  try {
+    // Start transaction
+    await pool.query('BEGIN');
+
+    // Clear all data except original super admin
+    await pool.query('DELETE FROM votes');
+    await pool.query('DELETE FROM voter_activity_log');
+    await pool.query('DELETE FROM voters');
+    await pool.query('DELETE FROM parties');
+    await pool.query('DELETE FROM admin_audit_log');
+    await pool.query('DELETE FROM admins WHERE id != 1');
+    await pool.query('DELETE FROM admin_settings');
+    await pool.query('DELETE FROM system_config');
+
+    // Reset sequences
+    await pool.query('ALTER SEQUENCE voters_id_seq RESTART WITH 1');
+    await pool.query('ALTER SEQUENCE parties_id_seq RESTART WITH 1');
+    await pool.query('ALTER SEQUENCE votes_id_seq RESTART WITH 1');
+    await pool.query('ALTER SEQUENCE admins_id_seq RESTART WITH 2');
+    await pool.query('ALTER SEQUENCE admin_settings_id_seq RESTART WITH 1');
+    await pool.query('ALTER SEQUENCE system_config_id_seq RESTART WITH 1');
+    await pool.query('ALTER SEQUENCE admin_audit_log_id_seq RESTART WITH 1');
+    await pool.query('ALTER SEQUENCE voter_activity_log_id_seq RESTART WITH 1');
+
+    // Re-insert initial data
+    await pool.query('INSERT INTO admin_settings (registration_open) VALUES (TRUE)');
+
+    await pool.query(`
+      INSERT INTO parties (name_english, name_amharic, leader_name_english, leader_name_amharic, ideology, description_english, description_amharic, is_active, created_by) VALUES
+      ('Prosperity Party', 'ብልጽግና ፓርቲ', 'Abiy Ahmed', 'አብይ አህመድ', 'Development and Prosperity', 'The Prosperity Party is committed to transforming Ethiopia through sustainable development, economic growth, and national unity.', 'ብልጽግና ፓርቲ ኢትዮጵያን በማለሳለስ ኢኮኖሚ እድገት እና ብሔራዊ አንድነት በመላክ ለመለወጥ ተለያዩበታል።', true, 1),
+      ('Ethiopian Citizens for Social Justice - EZEMA', 'የኢትዮጵያ ዜጎች ለማኅበራዊ ፍትህ(ኢዜማ)', 'Berhanu Nega', 'ብርሃኑ ነጋ', 'Social Justice and Democracy', 'EZEMA focuses on promoting social justice, democratic values, and equal opportunities for all Ethiopian citizens.', 'ኢዜማ ማኅበራዊ ፍትህን ለማሳደግ፣ ዲሞክራሲያዊ እሴቶችን ለማሳደግ እና ለሁሉም ኢትዮጵያ ዜጎች እኩል እድሎችን ለማሳደግ ያተኮራል።', true, 1),
+      ('National Movement of Amhara (NaMA)', 'የአማራ ብሔራዊ ንቅናቄ(አብን)', 'Demeke Mekonnen', 'ደመቀ መኮንን', 'Regional Autonomy and Rights', 'NaMA advocates for the rights and autonomy of the Amhara people while promoting national unity and development.', 'አብን የአማራ ህዝብ መብቶችን እና ራሱን ለማስተያየት ብሔራዊ አንድነትን እና እድገትን በማሳደግ ያተኮራል።', true, 1),
+      ('Oromo Federalist Congress (OFC)', 'ኦሮሞ ፌዴራሊስት ኮንግረስ(ኦፌኮ)', 'Merera Gudina', 'መራራ ጉዲና', 'Federalism and Self-Determination', 'OFC promotes federalist principles, self-determination for the Oromo people, and democratic governance.', 'ኦፌኮ ፌዴራሊስት መርሆችን ለማሳደግ፣ ለኦሮሞ ህዝብ ራሱን ለማስተያየት እና ዲሞክራሲያዊ አስተያየት ለማሳደግ ያተኮራል።', true, 1)
+    `);
+
+    await pool.query(`
+      INSERT INTO system_config (config_key, config_value, description) VALUES
+      ('system_name', '"Ethiopian Voting System"', 'Name of the voting system'),
+      ('version', '"1.0.0"', 'Current system version'),
+      ('max_login_attempts', '5', 'Maximum failed login attempts before account lock'),
+      ('lock_duration_minutes', '30', 'Account lock duration in minutes')
+    `);
+
+    // Commit transaction
+    await pool.query('COMMIT');
+
+    console.log(`Original super admin ${req.session.adminId} performed complete database reset`);
+
+    res.render('reset_success');
+  } catch (err) {
+    // Rollback on error
+    await pool.query('ROLLBACK');
+    console.error('Error resetting database:', err);
+    res.send('Error resetting database: ' + err.message);
+  }
+});
+
+// Public parties page
+app.get('/parties', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM parties WHERE is_active = TRUE ORDER BY name_english');
+    res.render('parties', { parties: result.rows });
+  } catch (err) {
+    console.error(err);
+    res.render('parties', { parties: [] });
+  }
+});
+
+// About parties page (dynamic version of party.html)
+app.get('/party.html', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM parties WHERE is_active = TRUE ORDER BY name_english');
+    res.render('party_dynamic', { parties: result.rows });
+  } catch (err) {
+    console.error(err);
+    // Fallback to static file if database fails
+    res.sendFile(path.join(__dirname, 'public', 'party.html'));
+  }
+});
+
 app.get('/admin/logout', (req, res) => {
   req.session.destroy((err) => {
     if (err) {
@@ -502,6 +911,9 @@ app.get('/admin/logout', (req, res) => {
     }
   });
 });
+
+// Static files middleware (placed after routes to allow dynamic routes to take precedence)
+app.use(express.static('public'));
 
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);
