@@ -3,6 +3,7 @@ node_modules/
 
 # Environment variables
 cookies.txt
+knexfile.js
 uploads/
 README.md
 .env
