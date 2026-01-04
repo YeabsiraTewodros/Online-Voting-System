@@ -26,6 +26,45 @@ const pool = new Pool({
   password: process.env.DB_PASSWORD,
   port: process.env.DB_PORT,
 });
+// System configuration helper (reads and caches `system_config` table)
+const createSystemConfig = require('./lib/systemConfig');
+const systemConfig = createSystemConfig(pool);
+
+// Helper to log admin actions to the `admin_audit_log` table
+async function logAdminAction(adminId, action, target = null, details = null, req = null) {
+  try {
+    const ip = req ? (req.headers['x-forwarded-for'] || req.connection.remoteAddress || null) : null;
+    const userAgent = req ? req.headers['user-agent'] || null : null;
+    // Map to actual columns in admin_audit_log: table_name, record_id, old_values, new_values
+    const tableName = target || null;
+    const recordId = null;
+    const newValues = details || null;
+    await pool.query(
+      `INSERT INTO admin_audit_log (
+        admin_id, action, table_name, record_id, old_values, new_values, ip_address, user_agent, created_at
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())`,
+      [adminId, action, tableName, recordId, null, newValues, ip, userAgent]
+    );
+  } catch (err) {
+    console.error('Failed to log admin action:', err);
+  }
+}
+
+// Helper to log voter activity to the `voter_activity_log` table
+async function logVoterActivity(voterId, action, details = null, req = null) {
+  try {
+    const ip = req ? (req.headers['x-forwarded-for'] || req.connection.remoteAddress || null) : null;
+    const userAgent = req ? req.headers['user-agent'] || null : null;
+    const payload = details || null;
+    await pool.query(
+      `INSERT INTO voter_activity_log (voter_id, action, details, ip_address, user_agent, created_at)
+       VALUES ($1, $2, $3, $4, $5, NOW())`,
+      [voterId, action, payload, ip, userAgent]
+    );
+  } catch (err) {
+    console.error('Failed to log voter activity:', err);
+  }
+}
 
 // Middleware
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -170,6 +209,11 @@ app.post('/admin/login', async (req, res) => {
         req.session.adminId = admin.id;
         req.session.adminRole = admin.role;
         console.log('Admin login successful for user:', username, 'Role:', admin.role);
+        try {
+          await logAdminAction(admin.id, 'admin_login_success', 'admins', { username: username }, req);
+        } catch (err) {
+          console.error('Audit log error (login):', err);
+        }
         res.redirect('/admin/login');
       } else {
         console.log('Invalid password for admin:', username);
@@ -193,21 +237,61 @@ app.post('/login', async (req, res) => {
   const { finnumber, password } = req.body;
   try {
     const result = await pool.query('SELECT * FROM voters WHERE finnumber = $1', [finnumber]);
-    if (result.rows.length > 0) {
-      const voter = result.rows[0];
-      const isValidPassword = await bcrypt.compare(password, voter.password);
-      if (isValidPassword) {
-        req.session.voterId = voter.id;
-        if (!voter.has_changed_password) {
-          res.redirect('/change-password');
-        } else {
-          res.redirect('/vote');
-        }
+    if (result.rows.length === 0) {
+      return res.redirect('/login');
+    }
+
+    const voter = result.rows[0];
+
+    // Fetch config values (with sensible defaults)
+    const maxAttemptsRaw = await systemConfig.getSystemConfig('max_login_attempts');
+    const lockDurationRaw = await systemConfig.getSystemConfig('lock_duration_minutes');
+    const maxAttempts = Number(maxAttemptsRaw) || 5;
+    const lockMinutes = Number(lockDurationRaw) || 30;
+
+    const now = new Date();
+    if (voter.locked_until && new Date(voter.locked_until) > now) {
+      const remainingMs = new Date(voter.locked_until) - now;
+      const remainingMinutes = Math.ceil(remainingMs / 60000);
+      return res.render('voter_locked', { remainingMinutes, unlockAt: voter.locked_until });
+    }
+
+    const isValidPassword = await bcrypt.compare(password, voter.password);
+    if (isValidPassword) {
+      // reset attempts and clear lock
+      try {
+        await pool.query('UPDATE voters SET login_attempts = 0, locked_until = NULL WHERE id = $1', [voter.id]);
+      } catch (err) {
+        console.error('Failed to reset voter login attempts:', err);
+      }
+      req.session.voterId = voter.id;
+      try {
+        await logVoterActivity(voter.id, 'login', { finnumber: finnumber }, req);
+      } catch (err) {
+        console.error('Voter activity log error (login):', err);
+      }
+      if (!voter.has_changed_password) {
+        res.redirect('/change-password');
       } else {
-        res.redirect('/login');
+        res.redirect('/vote');
       }
     } else {
-      res.redirect('/login');
+      // increment attempts
+      const attempts = (voter.login_attempts || 0) + 1;
+      if (attempts >= maxAttempts) {
+        const unlockAt = new Date(Date.now() + lockMinutes * 60000);
+        await pool.query('UPDATE voters SET login_attempts = 0, locked_until = $1 WHERE id = $2', [unlockAt, voter.id]);
+        try {
+          await logVoterActivity(voter.id, 'locked_out', { attempts, lock_minutes: lockMinutes }, req);
+        } catch (err) {
+          console.error('Voter activity log error (locked_out):', err);
+        }
+        const remainingMinutes = lockMinutes;
+        return res.render('voter_locked', { remainingMinutes, unlockAt });
+      } else {
+        await pool.query('UPDATE voters SET login_attempts = $1 WHERE id = $2', [attempts, voter.id]);
+        return res.redirect('/login');
+      }
     }
   } catch (err) {
     console.error(err);
@@ -243,6 +327,11 @@ app.post('/change-password', async (req, res) => {
       res.redirect('/vote');
     } else {
       res.render('password_changed', { votePeriodOpen });
+    }
+    try {
+      await logVoterActivity(req.session.voterId, 'change_password', null, req);
+    } catch (err) {
+      console.error('Voter activity log error (change-password):', err);
     }
   } catch (err) {
     console.error(err);
@@ -297,6 +386,11 @@ app.post('/vote', async (req, res) => {
     }
 
     await pool.query('INSERT INTO votes (voter_id, party) VALUES ($1, $2)', [req.session.voterId, party]);
+    try {
+      await logVoterActivity(req.session.voterId, 'vote_cast', { party: party }, req);
+    } catch (err) {
+      console.error('Voter activity log error (vote):', err);
+    }
     res.render('vote_submitted', { party });
   } catch (err) {
     console.error(err);
@@ -364,9 +458,15 @@ app.post('/admin/register', requireAdmin, async (req, res) => {
     }
 
     // Check if registration period is set and current time is within it
+    // Require registration to be explicitly open (treat NULL/undefined as closed)
+    if (settings.registration_open !== true) {
+      return res.render('registration_error', { errorMessage: 'Voter registration is currently closed by administrators' });
+    }
+
+    // Check if registration period is set and current time is within it
     if (settings.registration_start_date && settings.registration_end_date) {
       if (now < new Date(settings.registration_start_date) || now > new Date(settings.registration_end_date)) {
-        return res.send('Voter registration is only allowed during the specified registration period');
+        return res.render('registration_error', { errorMessage: 'Voter registration is only allowed during the specified registration period' });
       }
     }
 
@@ -402,6 +502,11 @@ app.post('/admin/register', requireAdmin, async (req, res) => {
 
     // Log admin action
     console.log(`Admin ${req.session.adminId} registered voter: ${finnumber}`);
+    try {
+      await logAdminAction(req.session.adminId, 'register_voter', 'voters', { finnumber: finnumber }, req);
+    } catch (err) {
+      console.error('Audit log error (register voter):', err);
+    }
 
     res.render('voter_registered');
   } catch (err) {
@@ -453,6 +558,11 @@ app.post('/admin/toggle', requireOriginalSuperAdmin, async (req, res) => {
 
     // Log the successful action
     console.log(`Election period set by admin ${req.session.adminId} from ${startDate} to ${endDate}`);
+    try {
+      await logAdminAction(req.session.adminId, 'set_election_period', 'admin_settings', { startDate: startDate.toISOString(), endDate: endDate.toISOString() }, req);
+    } catch (err) {
+      console.error('Audit log error (set election):', err);
+    }
 
     res.redirect('/admin/login');
   } catch (err) {
@@ -466,6 +576,11 @@ app.post('/admin/toggle/close', requireOriginalSuperAdmin, async (req, res) => {
   try {
     console.log(`Admin ${req.session.adminId} closing election period at ${new Date().toISOString()}`);
     await pool.query('UPDATE admin_settings SET election_start_date = NULL, election_end_date = NULL WHERE id = 1');
+    try {
+      await logAdminAction(req.session.adminId, 'close_election_period', 'admin_settings', { action: 'close' }, req);
+    } catch (err) {
+      console.error('Audit log error (close election):', err);
+    }
     res.redirect('/admin/login');
   } catch (err) {
     console.error('Error closing election period:', err);
@@ -512,6 +627,11 @@ app.post('/admin/registration-period', requireOriginalSuperAdmin, async (req, re
 
     // Log the successful action
     console.log(`Registration period set by admin ${req.session.adminId} from ${startDate} to ${endDate}`);
+    try {
+      await logAdminAction(req.session.adminId, 'set_registration_period', 'admin_settings', { startDate: startDate.toISOString(), endDate: endDate.toISOString() }, req);
+    } catch (err) {
+      console.error('Audit log error (set registration):', err);
+    }
 
     res.redirect('/admin/login');
   } catch (err) {
@@ -525,6 +645,11 @@ app.post('/admin/registration-period/reset', requireOriginalSuperAdmin, async (r
   try {
     console.log(`Admin ${req.session.adminId} resetting registration period at ${new Date().toISOString()}`);
     await pool.query('UPDATE admin_settings SET registration_start_date = NULL, registration_end_date = NULL WHERE id = 1');
+    try {
+      await logAdminAction(req.session.adminId, 'reset_registration_period', 'admin_settings', { action: 'reset' }, req);
+    } catch (err) {
+      console.error('Audit log error (reset registration):', err);
+    }
     res.redirect('/admin/registration-period');
   } catch (err) {
     console.error('Error resetting registration period:', err);
@@ -545,6 +670,47 @@ app.get('/admin/manage-admins', requireSuperAdmin, async (req, res) => {
   } catch (err) {
     console.error(err);
     res.send('Error loading admin management page');
+  }
+});
+
+// Admin Audit Log viewer
+app.get('/admin/audit', requireOriginalSuperAdmin, async (req, res) => {
+  try {
+    console.log('/admin/audit requested by adminId=', req.session && req.session.adminId);
+    const { admin_id, action, table_name, from, to } = req.query;
+    let sql = `SELECT id, admin_id, action, table_name, record_id, old_values, new_values, ip_address, user_agent, created_at
+               FROM admin_audit_log WHERE 1=1`;
+    const params = [];
+    if (admin_id) {
+      params.push(admin_id);
+      sql += ` AND admin_id = $${params.length}`;
+    }
+    if (action) {
+      params.push(`%${action}%`);
+      sql += ` AND action ILIKE $${params.length}`;
+    }
+    if (table_name) {
+      params.push(table_name);
+      sql += ` AND table_name = $${params.length}`;
+    }
+    if (from) {
+      params.push(new Date(from));
+      sql += ` AND created_at >= $${params.length}`;
+    }
+    if (to) {
+      params.push(new Date(to));
+      sql += ` AND created_at <= $${params.length}`;
+    }
+    sql += ` ORDER BY created_at DESC LIMIT 500`;
+
+    const result = await pool.query(sql, params);
+    res.render('admin_audit', {
+      audits: result.rows,
+      filters: { admin_id: admin_id || '', action: action || '', table_name: table_name || '', from: from || '', to: to || '' }
+    });
+  } catch (err) {
+    console.error('Error loading admin audit log:', err);
+    res.send('Error loading audit log');
   }
 });
 
@@ -581,6 +747,11 @@ app.post('/admin/register-admin', requireSuperAdmin, async (req, res) => {
                      [username, hashedPassword, role, req.session.adminId]);
 
     console.log(`Super admin ${req.session.adminId} registered new ${role}: ${username}`);
+    try {
+      await logAdminAction(req.session.adminId, 'register_admin', 'admins', { username: username, role: role }, req);
+    } catch (err) {
+      console.error('Audit log error (register admin):', err);
+    }
     res.redirect('/admin/manage-admins?message=Admin registered successfully');
   } catch (err) {
     console.error('Error registering admin:', err);
@@ -611,6 +782,11 @@ app.post('/admin/create-admin', requireSuperAdmin, async (req, res) => {
                      [username, hashedPassword, role, req.session.adminId]);
 
     console.log(`Super admin ${req.session.adminId} created new ${role}: ${username}`);
+    try {
+      await logAdminAction(req.session.adminId, 'create_admin', 'admins', { username: username, role: role }, req);
+    } catch (err) {
+      console.error('Audit log error (create admin):', err);
+    }
     res.redirect('/admin/manage-admins');
   } catch (err) {
     console.error('Error creating admin:', err);
@@ -639,6 +815,11 @@ app.post('/admin/delete-admin/:id', requireSuperAdmin, async (req, res) => {
     await pool.query('DELETE FROM admins WHERE id = $1', [adminId]);
 
     console.log(`Super admin ${req.session.adminId} deleted admin ${adminId}`);
+    try {
+      await logAdminAction(req.session.adminId, 'delete_admin', 'admins', { deleted_admin_id: adminId }, req);
+    } catch (err) {
+      console.error('Audit log error (delete admin):', err);
+    }
     res.redirect('/admin/manage-admins');
   } catch (err) {
     console.error('Error deleting admin:', err);
@@ -696,6 +877,11 @@ app.post('/admin/parties/add', requireOriginalSuperAdmin, upload.fields([
     ]);
 
     console.log(`Original super admin ${req.session.adminId} added new party: ${name_english}`);
+    try {
+      await logAdminAction(req.session.adminId, 'add_party', 'parties', { name_english: name_english }, req);
+    } catch (err) {
+      console.error('Audit log error (add party):', err);
+    }
     res.redirect('/admin/parties');
   } catch (err) {
     console.error('Error adding party:', err);
@@ -766,6 +952,11 @@ app.post('/admin/parties/edit/:id', requireOriginalSuperAdmin, upload.fields([
     ]);
 
     console.log(`Original super admin ${req.session.adminId} updated party: ${name_english}`);
+    try {
+      await logAdminAction(req.session.adminId, 'edit_party', 'parties', { party_id: req.params.id, name_english: name_english }, req);
+    } catch (err) {
+      console.error('Audit log error (edit party):', err);
+    }
     res.redirect('/admin/parties');
   } catch (err) {
     console.error('Error updating party:', err);
@@ -785,6 +976,11 @@ app.post('/admin/parties/delete/:id', requireOriginalSuperAdmin, async (req, res
     await pool.query('DELETE FROM parties WHERE id = $1', [req.params.id]);
 
     console.log(`Original super admin ${req.session.adminId} deleted party: ${party.rows[0].name_english}`);
+    try {
+      await logAdminAction(req.session.adminId, 'delete_party', 'parties', { party_id: req.params.id, name_english: party.rows[0].name_english }, req);
+    } catch (err) {
+      console.error('Audit log error (delete party):', err);
+    }
     res.redirect('/admin/parties');
   } catch (err) {
     console.error('Error deleting party:', err);
@@ -868,6 +1064,12 @@ app.post('/admin/reset-database', requireOriginalSuperAdmin, async (req, res) =>
     await pool.query('COMMIT');
 
     console.log(`Original super admin ${req.session.adminId} performed complete database reset`);
+
+    try {
+      await logAdminAction(req.session.adminId, 'reset_database', 'system', { scope: 'all' }, req);
+    } catch (err) {
+      console.error('Audit log error (reset database):', err);
+    }
 
     res.render('reset_success');
   } catch (err) {

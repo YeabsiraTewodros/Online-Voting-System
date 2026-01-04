@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Account Locked</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="/css/voter_locked.css">
+</head>
+<body>
+  <div class="locked-page">
+    <div class="locked-card">
+      <div class="locked-visual">
+        <!-- lock icon -->
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <rect x="3" y="11" width="18" height="10" rx="2" fill="rgba(255,255,255,0.12)"/>
+          <path d="M7 11V8a5 5 0 0110 0v3" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <h2 style="margin:0 0 6px; font-size:1.4rem">Account Locked</h2>
+        <p class="muted" style="text-align:center">Too many failed login attempts</p>
+      </div>
+      <div class="locked-body">
+        <p style="margin:0">Your account has been temporarily locked to protect against unauthorized access.</p>
+        <div>
+          <div class="muted">Time remaining</div>
+          <div id="countdown" class="countdown"><%= remainingMinutes %> minute(s)</div>
+        </div>
+        <% if (typeof unlockAt !== 'undefined') { %>
+          <div class="muted">Unlocks at: <%= new Date(unlockAt).toLocaleString() %></div>
+        <% } %>
+        <p class="muted">If you think this is a mistake, contact an administrator or try again later.</p>
+        <div class="actions">
+          <a href="/" class="btn btn-primary">Home</a>
+          <a href="/login" class="btn btn-outline-secondary">Back to Login</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function(){
+      const countdownEl = document.getElementById('countdown');
+      const serverUnlock = <%- JSON.stringify(unlockAt || null) %>;
+      let remaining = Number(<%= remainingMinutes %>) || 0;
+      if (serverUnlock) {
+        const unlockMs = new Date(serverUnlock).getTime();
+        function tick() {
+          const now = Date.now();
+          const diff = Math.max(0, unlockMs - now);
+          const mins = Math.floor(diff / 60000);
+          const secs = Math.floor((diff % 60000) / 1000);
+          countdownEl.textContent = mins + 'm ' + (secs<10? '0'+secs:secs) + 's';
+          if (diff<=0) clearInterval(interval);
+        }
+        tick();
+        const interval = setInterval(tick, 1000);
+      } else {
+        // show simple minutes if no unlock timestamp
+        countdownEl.textContent = remaining + ' minute(s)';
+      }
+    })();
+  </script>
+</body>
+</html>
