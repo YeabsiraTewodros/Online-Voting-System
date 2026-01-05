@@ -132,10 +132,12 @@ function requireSuperAdmin(req, res, next) {
 
 // Middleware to check original super admin authentication (id = 1)
 function requireOriginalSuperAdmin(req, res, next) {
-  if (req.session.isAdmin && req.session.adminRole === 'super_admin' && req.session.adminId === 1) {
+  // The previous check required the super admin to have id === 1 which is brittle
+  // Relax this to allow any user with the `super_admin` role to perform these actions.
+  if (req.session.isAdmin && req.session.adminRole === 'super_admin') {
     return next();
   } else {
-    return res.send('Access denied. Only the original super admin can perform this action.');
+    return res.send('Access denied. Super admin privileges required.');
   }
 }
 
@@ -158,7 +160,8 @@ app.get('/', (req, res) => {
       // Consider registration open if admin explicitly set the flag OR current time falls inside the date window
       const dateWindowOpen = settings.registration_start_date && settings.registration_end_date &&
         now >= new Date(settings.registration_start_date) && now <= new Date(settings.registration_end_date);
-      const registrationPeriodOpen = (settings.registration_open === true) || Boolean(dateWindowOpen);
+      const flagTrue = String(settings.registration_open).toLowerCase() === 'true';
+      const registrationPeriodOpen = flagTrue || Boolean(dateWindowOpen);
 
       const registrationStartDate = settings.registration_start_date ? new Date(settings.registration_start_date).toLocaleString() : '';
       const registrationEndDate = settings.registration_end_date ? new Date(settings.registration_end_date).toLocaleString() : '';
@@ -469,7 +472,8 @@ app.post('/admin/register', requireAdmin, async (req, res) => {
     // Allow registration when admin flag is explicitly true OR when current time falls inside the configured date window
     const dateWindowOpen = settings.registration_start_date && settings.registration_end_date &&
       now >= new Date(settings.registration_start_date) && now <= new Date(settings.registration_end_date);
-    const registrationOpenFlag = settings.registration_open === true || Boolean(dateWindowOpen);
+    const flagTrue = String(settings.registration_open).toLowerCase() === 'true';
+    const registrationOpenFlag = flagTrue || Boolean(dateWindowOpen);
     if (!registrationOpenFlag) {
       return res.render('registration_error', { errorMessage: 'Voter registration is currently closed by administrators' });
     }
