@@ -20,13 +20,11 @@ const port = process.env.PORT || 3000;
 
 // PostgreSQL connection
 const pool = new Pool({
-  // Use the single Connection String instead of 5 separate variables
   connectionString: process.env.DATABASE_URL,
-  
-  // This part is CRITICAL for cloud hosting (Neon/Render)
-  ssl: process.env.DATABASE_URL && process.env.DATABASE_URL.includes('neon.tech') 
-    ? { rejectUnauthorized: false } 
-    : false
+  // Force SSL on for Render, regardless of the URL string
+  ssl: {
+    rejectUnauthorized: false
+  }
 });
 // System configuration helper (reads and caches `system_config` table)
 const createSystemConfig = require('./lib/systemConfig');
