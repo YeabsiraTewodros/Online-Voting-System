@@ -720,6 +720,48 @@ h1, h2, h3, h4, h5, h6 {
     z-index: 1202;
   }
 
+  /* Make the toggler larger and more attention-seeking on mobile */
+  .navbar-toggler {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 12px;
+    background: linear-gradient(90deg,#ff7a18,#ffb199);
+    border: none;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+    color: #fff;
+    transform-origin: center;
+  }
+
+  .navbar-toggler .navbar-toggler-icon { filter: brightness(0) invert(1); }
+
+  .navbar-toggler-label {
+    display: none; /* shown on narrow screens below */
+    font-weight: 700;
+    color: #fff;
+    font-size: 0.85rem;
+    line-height: 1;
+    padding-left: 2px;
+  }
+
+  .navbar-toggler-pulse {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.95);
+    box-shadow: 0 0 0 rgba(255,255,255,0.6);
+    margin-left: 2px;
+    animation: menuPulse 1.6s infinite ease-out;
+  }
+
+  @keyframes menuPulse {
+    0% { transform: scale(0.85); box-shadow: 0 0 0 0 rgba(255,255,255,0.6); }
+    70% { transform: scale(1.25); box-shadow: 0 0 0 10px rgba(255,255,255,0); }
+    100% { transform: scale(0.85); box-shadow: 0 0 0 0 rgba(255,255,255,0); }
+  }
+
   .navbar-collapse {
     display: none;
   }
@@ -739,6 +781,17 @@ h1, h2, h3, h4, h5, h6 {
     padding: 0.75rem 1rem;
     border-bottom-left-radius: 12px;
     border-bottom-right-radius: 12px;
+  }
+
+  /* Reveal the label on narrow screens and slightly enlarge toggler */
+  .navbar-toggler-label {
+    display: inline-block;
+  }
+
+  .navbar-toggler {
+    padding: 10px 14px;
+    gap: 10px;
+    min-width: 64px;
   }
 
   .navbar-nav {
