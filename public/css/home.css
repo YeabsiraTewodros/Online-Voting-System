@@ -713,6 +713,57 @@ h1, h2, h3, h4, h5, h6 {
   .image-container { height: 200px; }
 }
 
+/* Mobile navbar visibility fixes: ensure toggler opens a visible menu and links are readable */
+@media (max-width: 768px) {
+  .navbar-toggler {
+    display: block;
+    z-index: 1202;
+  }
+
+  .navbar-collapse {
+    display: none;
+  }
+
+  .navbar-collapse.show {
+    display: flex !important;
+    z-index: 1200;
+    flex-direction: column;
+    width: 100%;
+    left: 0;
+    right: 0;
+    top: 100%;
+    background: rgba(55,70,88,0.98); /* match header with high contrast */
+    padding: 0.75rem 1rem;
+  }
+
+  .navbar-nav {
+    width: 100%;
+    gap: 0.5rem;
+  }
+
+  .navbar-nav .nav-link.btn {
+    width: 100%;
+    display: block;
+    text-align: center;
+    padding: 0.6rem 0.75rem;
+    margin: 0.25rem 0;
+    border-radius: 8px;
+    background: #ffffff !important;
+    color: #212529 !important;
+    border: none !important;
+  }
+
+  .navbar-nav .nav-link.btn.btn-info {
+    background: #17a2b8 !important;
+    color: #fff !important;
+  }
+
+  .navbar-nav .nav-link.btn.btn-success {
+    background: #28a745 !important;
+    color: #fff !important;
+  }
+}
+
 @media (max-width: 576px) {
   .container {
     padding: 0 10px;
