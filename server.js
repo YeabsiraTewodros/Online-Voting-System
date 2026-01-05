@@ -69,11 +69,36 @@ async function logAdminAction(adminId, action, target = null, details = null, re
         error: String(err)
       };
       fs.appendFileSync(fallbackFile, JSON.stringify(entry) + '\n');
+      // mark response as audited so middleware won't double-log
+      try { if (req && req.res && req.res.locals) req.res.locals.auditLogged = true; } catch(e){}
     } catch (fileErr) {
       console.error('Failed to write admin audit fallback file:', fileErr);
     }
   }
 }
+
+// Middleware: ensure admin write actions are audited even if handler forgets
+app.use('/admin', (req, res, next) => {
+  // Only consider authenticated admins and write methods
+  if (!req.session || !req.session.isAdmin) return next();
+  if (!['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method)) return next();
+
+  // After the response finishes, if the handler didn't log, create an audit entry
+  res.on('finish', async () => {
+    try {
+      if (res.locals && res.locals.auditLogged) return; // already logged by handler
+      const adminId = req.session.adminId || null;
+      const action = `${req.method} ${req.path}`;
+      const target = req.path.split('/')[2] || null; // crude table/target hint
+      const details = { statusCode: res.statusCode, body: req.body || null, query: req.query || null };
+      await logAdminAction(adminId, action, target, details, req);
+    } catch (e) {
+      console.error('Auto audit middleware error:', e);
+    }
+  });
+
+  next();
+});
 
 // Helper to log voter activity to the `voter_activity_log` table
 async function logVoterActivity(voterId, action, details = null, req = null) {
