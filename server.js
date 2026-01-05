@@ -37,12 +37,14 @@ async function logAdminAction(adminId, action, target = null, details = null, re
     // Map to actual columns in admin_audit_log: table_name, record_id, old_values, new_values
     const tableName = target || null;
     const recordId = null;
-    const newValues = details || null;
+    // Ensure JSONB fields are passed as JSON strings to avoid driver type issues
+    const oldValuesJson = null;
+    const newValuesJson = details ? JSON.stringify(details) : null;
     await pool.query(
       `INSERT INTO admin_audit_log (
         admin_id, action, table_name, record_id, old_values, new_values, ip_address, user_agent, created_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())`,
-      [adminId, action, tableName, recordId, null, newValues, ip, userAgent]
+      ) VALUES ($1, $2, $3, $4, $5::jsonb, $6::jsonb, $7, $8, NOW())`,
+      [adminId || null, action || null, tableName, recordId, oldValuesJson, newValuesJson, ip, userAgent]
     );
   } catch (err) {
     console.error('Failed to log admin action to DB:', err);
@@ -73,11 +75,11 @@ async function logVoterActivity(voterId, action, details = null, req = null) {
   try {
     const ip = req ? (req.headers['x-forwarded-for'] || req.connection.remoteAddress || null) : null;
     const userAgent = req ? req.headers['user-agent'] || null : null;
-    const payload = details || null;
+    const payload = details ? JSON.stringify(details) : null;
     await pool.query(
       `INSERT INTO voter_activity_log (voter_id, action, details, ip_address, user_agent, created_at)
-       VALUES ($1, $2, $3, $4, $5, NOW())`,
-      [voterId, action, payload, ip, userAgent]
+       VALUES ($1, $2, $3::jsonb, $4, $5, NOW())`,
+      [voterId || null, action || null, payload, ip, userAgent]
     );
   } catch (err) {
     console.error('Failed to log voter activity:', err);
@@ -172,7 +174,7 @@ const parties = [
 app.get('/', (req, res) => {
   (async () => {
     try {
-      const result = await pool.query('SELECT registration_start_date, registration_end_date, registration_open FROM admin_settings WHERE id = 1');
+          const result = await pool.query('SELECT registration_start_date, registration_end_date, registration_open FROM admin_settings ORDER BY id DESC LIMIT 1');
       const settings = result.rows[0] || {};
       const now = new Date();
 
@@ -197,7 +199,7 @@ app.get('/', (req, res) => {
 app.get('/admin/login', async (req, res) => {
   if (req.session.isAdmin) {
     try {
-      const result = await pool.query('SELECT election_start_date, election_end_date, registration_start_date, registration_end_date FROM admin_settings WHERE id = 1');
+          const result = await pool.query('SELECT election_start_date, election_end_date, registration_start_date, registration_end_date FROM admin_settings ORDER BY id DESC LIMIT 1');
       const settings = result.rows[0] || {};
       const now = new Date();
       const votePeriodOpen = settings.election_start_date && settings.election_end_date &&
@@ -347,7 +349,7 @@ app.post('/change-password', async (req, res) => {
     await pool.query('UPDATE voters SET password = $1, has_changed_password = TRUE WHERE id = $2', [hashedPassword, req.session.voterId]);
 
     // Check vote period status
-    const result = await pool.query('SELECT election_start_date, election_end_date FROM admin_settings WHERE id = 1');
+    const result = await pool.query('SELECT election_start_date, election_end_date FROM admin_settings ORDER BY id DESC LIMIT 1');
     const settings = result.rows[0];
     const now = new Date();
     const votePeriodOpen = settings.election_start_date && settings.election_end_date &&
@@ -375,7 +377,7 @@ app.get('/vote', async (req, res) => {
     return res.redirect('/login');
   }
   try {
-    const result = await pool.query('SELECT election_start_date, election_end_date FROM admin_settings WHERE id = 1');
+    const result = await pool.query('SELECT election_start_date, election_end_date FROM admin_settings ORDER BY id DESC LIMIT 1');
     const settings = result.rows[0];
     const now = new Date();
     const votePeriodOpen = settings.election_start_date && settings.election_end_date &&
@@ -432,7 +434,7 @@ app.post('/vote', async (req, res) => {
 app.get('/results', async (req, res) => {
   try {
     const result = await pool.query('SELECT party, COUNT(*) as votes FROM votes GROUP BY party');
-    const settingsResult = await pool.query('SELECT election_start_date, election_end_date FROM admin_settings WHERE id = 1');
+    const settingsResult = await pool.query('SELECT election_start_date, election_end_date FROM admin_settings ORDER BY id DESC LIMIT 1');
     const votersResult = await pool.query('SELECT COUNT(*) as total_voters FROM voters WHERE is_active = TRUE');
     const partiesResult = await pool.query('SELECT COUNT(*) as total_parties FROM parties WHERE is_active = TRUE');
     const settings = settingsResult.rows[0] || {};
@@ -477,7 +479,7 @@ app.post('/admin/register', requireAdmin, async (req, res) => {
   const { fullname, age, sex, region, zone, woreda, city_kebele, phone_number, finnumber } = req.body;
     try {
     // Check registration and election periods
-    const settingsResult = await pool.query('SELECT election_start_date, election_end_date, registration_start_date, registration_end_date, registration_open FROM admin_settings WHERE id = 1');
+    const settingsResult = await pool.query('SELECT election_start_date, election_end_date, registration_start_date, registration_end_date, registration_open FROM admin_settings ORDER BY id DESC LIMIT 1');
     const settings = settingsResult.rows[0] || {};
     const now = new Date();
 
@@ -544,7 +546,7 @@ app.post('/admin/register', requireAdmin, async (req, res) => {
 
 app.get('/admin/toggle', requireOriginalSuperAdmin, async (req, res) => {
   try {
-    const result = await pool.query('SELECT election_start_date, election_end_date FROM admin_settings WHERE id = 1');
+    const result = await pool.query('SELECT election_start_date, election_end_date FROM admin_settings ORDER BY id DESC LIMIT 1');
     const settings = result.rows[0];
     const now = new Date();
     const isVotingOpen = settings.election_start_date && settings.election_end_date &&
@@ -581,7 +583,7 @@ app.post('/admin/toggle', requireOriginalSuperAdmin, async (req, res) => {
     console.log(`Admin ${req.session.adminId} setting election period from ${election_start_date} to ${election_end_date} at ${new Date().toISOString()}`);
 
     // Update the election dates
-    await pool.query('UPDATE admin_settings SET election_start_date = $1, election_end_date = $2 WHERE id = 1', [startDate, endDate]);
+    await pool.query('UPDATE admin_settings SET election_start_date = $1, election_end_date = $2 WHERE id = (SELECT id FROM admin_settings ORDER BY id DESC LIMIT 1)', [startDate, endDate]);
 
     // Log the successful action
     console.log(`Election period set by admin ${req.session.adminId} from ${startDate} to ${endDate}`);
@@ -602,7 +604,7 @@ app.post('/admin/toggle', requireOriginalSuperAdmin, async (req, res) => {
 app.post('/admin/toggle/close', requireOriginalSuperAdmin, async (req, res) => {
   try {
     console.log(`Admin ${req.session.adminId} closing election period at ${new Date().toISOString()}`);
-    await pool.query('UPDATE admin_settings SET election_start_date = NULL, election_end_date = NULL WHERE id = 1');
+    await pool.query('UPDATE admin_settings SET election_start_date = NULL, election_end_date = NULL WHERE id = (SELECT id FROM admin_settings ORDER BY id DESC LIMIT 1)');
     try {
       await logAdminAction(req.session.adminId, 'close_election_period', 'admin_settings', { action: 'close' }, req);
     } catch (err) {
@@ -618,7 +620,7 @@ app.post('/admin/toggle/close', requireOriginalSuperAdmin, async (req, res) => {
 // Registration Period Management Routes
 app.get('/admin/registration-period', requireOriginalSuperAdmin, async (req, res) => {
   try {
-    const result = await pool.query('SELECT registration_start_date, registration_end_date FROM admin_settings WHERE id = 1');
+    const result = await pool.query('SELECT registration_start_date, registration_end_date FROM admin_settings ORDER BY id DESC LIMIT 1');
     const settings = result.rows[0];
     res.render('registration_period', {
       registrationStartDate: settings.registration_start_date ? new Date(settings.registration_start_date).toISOString().slice(0, 16) : '',
@@ -650,7 +652,7 @@ app.post('/admin/registration-period', requireOriginalSuperAdmin, async (req, re
     console.log(`Admin ${req.session.adminId} setting registration period from ${registration_start_date} to ${registration_end_date} at ${new Date().toISOString()}`);
 
     // Update the registration dates and explicitly mark registration as open
-    await pool.query('UPDATE admin_settings SET registration_start_date = $1, registration_end_date = $2, registration_open = TRUE WHERE id = 1', [startDate, endDate]);
+    await pool.query('UPDATE admin_settings SET registration_start_date = $1, registration_end_date = $2, registration_open = TRUE WHERE id = (SELECT id FROM admin_settings ORDER BY id DESC LIMIT 1)', [startDate, endDate]);
 
     // Log the successful action
     console.log(`Registration period set by admin ${req.session.adminId} from ${startDate} to ${endDate}`);
@@ -672,7 +674,7 @@ app.post('/admin/registration-period/reset', requireOriginalSuperAdmin, async (r
   try {
     console.log(`Admin ${req.session.adminId} resetting registration period at ${new Date().toISOString()}`);
     // Clear registration dates and explicitly mark registration as closed
-    await pool.query('UPDATE admin_settings SET registration_start_date = NULL, registration_end_date = NULL, registration_open = FALSE WHERE id = 1');
+    await pool.query('UPDATE admin_settings SET registration_start_date = NULL, registration_end_date = NULL, registration_open = FALSE WHERE id = (SELECT id FROM admin_settings ORDER BY id DESC LIMIT 1)');
     try {
       await logAdminAction(req.session.adminId, 'reset_registration_period', 'admin_settings', { action: 'reset' }, req);
     } catch (err) {
@@ -1020,7 +1022,7 @@ app.post('/admin/parties/delete/:id', requireOriginalSuperAdmin, async (req, res
 app.get('/admin/reset-database', requireOriginalSuperAdmin, async (req, res) => {
   try {
     // Check if voting period is currently open
-    const result = await pool.query('SELECT election_start_date, election_end_date FROM admin_settings WHERE id = 1');
+    const result = await pool.query('SELECT election_start_date, election_end_date FROM admin_settings ORDER BY id DESC LIMIT 1');
     const settings = result.rows[0];
     const now = new Date();
     const votePeriodOpen = settings && settings.election_start_date && settings.election_end_date &&
