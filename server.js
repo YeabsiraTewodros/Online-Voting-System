@@ -20,11 +20,13 @@ const port = process.env.PORT || 3000;
 
 // PostgreSQL connection
 const pool = new Pool({
-  user: process.env.DB_USER,
-  host: process.env.DB_HOST,
-  database: process.env.DB_NAME,
-  password: process.env.DB_PASSWORD,
-  port: process.env.DB_PORT,
+  // Use the single Connection String instead of 5 separate variables
+  connectionString: process.env.DATABASE_URL,
+  
+  // This part is CRITICAL for cloud hosting (Neon/Render)
+  ssl: process.env.DATABASE_URL && process.env.DATABASE_URL.includes('neon.tech') 
+    ? { rejectUnauthorized: false } 
+    : false
 });
 // System configuration helper (reads and caches `system_config` table)
 const createSystemConfig = require('./lib/systemConfig');
@@ -1118,5 +1120,5 @@ app.get('/admin/logout', (req, res) => {
 app.use(express.static('public'));
 
 app.listen(port, () => {
-  console.log(`Server running at http://localhost:${port}`);
+  console.log(`Server is running on port ${port}`);
 });
