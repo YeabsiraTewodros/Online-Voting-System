@@ -29,6 +29,53 @@ const pool = new Pool({
 const createSystemConfig = require('./lib/systemConfig');
 const systemConfig = createSystemConfig(pool);
 
+// Pending audit queue file and processor
+const PENDING_AUDIT_FILE = path.join(__dirname, 'logs', 'pending_admin_audits.log');
+
+function enqueuePendingAudit(entry) {
+  try {
+    const dir = path.dirname(PENDING_AUDIT_FILE);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    fs.appendFileSync(PENDING_AUDIT_FILE, JSON.stringify(entry) + '\n');
+  } catch (e) {
+    console.error('Failed to enqueue pending audit:', e);
+  }
+}
+
+async function processPendingAudits() {
+  try {
+    if (!fs.existsSync(PENDING_AUDIT_FILE)) return;
+    const raw = fs.readFileSync(PENDING_AUDIT_FILE, 'utf8').trim();
+    if (!raw) return;
+    const lines = raw.split(/\r?\n/).filter(Boolean);
+    const remaining = [];
+    for (const ln of lines) {
+      let obj = null;
+      try { obj = JSON.parse(ln); } catch (e) { continue; }
+      try {
+        await pool.query(
+          `INSERT INTO admin_audit_log (admin_id, action, table_name, record_id, old_values, new_values, ip_address, user_agent, created_at)
+           VALUES ($1,$2,$3,$4,$5::jsonb,$6::jsonb,$7,$8,$9)`,
+          [obj.adminId || null, obj.action || null, obj.table || null, null, obj.old_values || null, obj.new_values || null, obj.ip || null, obj.userAgent || null, obj.timestamp || new Date().toISOString()]
+        );
+      } catch (e) {
+        // keep for retry
+        remaining.push(ln);
+      }
+    }
+    if (remaining.length === 0) {
+      fs.unlinkSync(PENDING_AUDIT_FILE);
+    } else {
+      fs.writeFileSync(PENDING_AUDIT_FILE, remaining.join('\n') + '\n');
+    }
+  } catch (e) {
+    console.error('Error processing pending audits:', e);
+  }
+}
+
+// Start background worker
+setInterval(processPendingAudits, 5000);
+
 // Helper to log admin actions to the `admin_audit_log` table
 async function logAdminAction(adminId, action, target = null, details = null, req = null) {
   try {
@@ -115,7 +162,31 @@ app.use('/admin', (req, res, next) => {
       const action = `${req.method} ${req.path}`;
       const target = req.path.split('/')[2] || null; // crude table/target hint
       const details = { statusCode: res.statusCode, body: req.body || null, query: req.query || null };
-      await logAdminAction(adminId, action, target, details, req);
+      try {
+        await logAdminAction(adminId, action, target, details, req);
+      } catch (e) {
+        console.error('Auto audit middleware logAdminAction error:', e);
+      }
+      // if still not marked as logged, enqueue to pending queue
+      try {
+        const marked = res.locals && res.locals.auditLogged;
+        if (!marked) {
+          const ip = req ? (req.headers['x-forwarded-for'] || req.connection.remoteAddress || null) : null;
+          const userAgent = req ? req.headers['user-agent'] || null : null;
+          const entry = {
+            timestamp: new Date().toISOString(),
+            adminId: adminId,
+            action: action,
+            table: target,
+            new_values: details,
+            ip: ip,
+            userAgent: userAgent
+          };
+          enqueuePendingAudit(entry);
+        }
+      } catch (e) {
+        console.error('Auto audit enqueue error:', e);
+      }
     } catch (e) {
       console.error('Auto audit middleware error:', e);
     }
