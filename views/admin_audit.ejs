@@ -64,8 +64,18 @@
                 <td><%= a.action %></td>
                 <td><%= a.table_name %></td>
                 <td><%= a.record_id %></td>
-                <td style="max-width:240px;"><pre><%= JSON.stringify(a.new_values, null, 2) %></pre></td>
-                <td style="max-width:240px;"><pre><%= JSON.stringify(a.old_values, null, 2) %></pre></td>
+                <td style="max-width:240px;">
+                  <% try {
+                       var prettyNew = (typeof a.new_values === 'string') ? JSON.parse(a.new_values) : a.new_values;
+                  } catch(e) { var prettyNew = a.new_values; } %>
+                  <pre><%= JSON.stringify(prettyNew, null, 2) %></pre>
+                </td>
+                <td style="max-width:240px;">
+                  <% try {
+                       var prettyOld = (typeof a.old_values === 'string') ? JSON.parse(a.old_values) : a.old_values;
+                  } catch(e) { var prettyOld = a.old_values; } %>
+                  <pre><%= JSON.stringify(prettyOld, null, 2) %></pre>
+                </td>
                 <td><%= a.ip_address %></td>
                 <td style="max-width:200px;"><%= a.user_agent %></td>
                 <td><%= new Date(a.created_at).toLocaleString() %></td>

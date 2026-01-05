@@ -41,19 +41,22 @@
       const countdownEl = document.getElementById('countdown');
       const serverUnlock = <%- JSON.stringify(unlockAt || null) %>;
       let remaining = Number(<%= remainingMinutes %>) || 0;
-      if (serverUnlock) {
+      if (serverUnlock && countdownEl) {
         const unlockMs = new Date(serverUnlock).getTime();
+        let interval = null;
         function tick() {
           const now = Date.now();
           const diff = Math.max(0, unlockMs - now);
           const mins = Math.floor(diff / 60000);
           const secs = Math.floor((diff % 60000) / 1000);
           countdownEl.textContent = mins + 'm ' + (secs<10? '0'+secs:secs) + 's';
-          if (diff<=0) clearInterval(interval);
+          if (diff <= 0 && interval) {
+            clearInterval(interval);
+          }
         }
         tick();
-        const interval = setInterval(tick, 1000);
-      } else {
+        interval = setInterval(tick, 1000);
+      } else if (countdownEl) {
         // show simple minutes if no unlock timestamp
         countdownEl.textContent = remaining + ' minute(s)';
       }
