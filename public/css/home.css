@@ -698,6 +698,19 @@ h1, h2, h3, h4, h5, h6 {
   .p-lg-5 {
     padding: 2rem;
   }
+
+  /* Make gallery and hero content scale better on small tablets */
+  .horizontal-gallery {
+    gap: 1rem;
+    padding: 0 1rem;
+  }
+  .gallery-item {
+    flex: 0 0 320px;
+  }
+  .gallery-card {
+    min-height: 380px;
+  }
+  .image-container { height: 200px; }
 }
 
 @media (max-width: 576px) {
@@ -744,6 +757,42 @@ h1, h2, h3, h4, h5, h6 {
   .btn-lg {
     padding: 0.75rem 1.5rem;
     font-size: 1rem;
+  }
+
+  /* Mobile: reduce gallery footprint and overall content scale */
+  .horizontal-gallery-container { padding: 1rem 0; }
+  .horizontal-gallery { gap: 0.75rem; padding: 0 0.5rem; }
+  .gallery-item { flex: 0 0 260px; }
+  .gallery-card { min-height: 300px; border-radius:12px; }
+  .image-container { height: 160px; }
+  .gallery-content { padding: 1rem; }
+
+  /* Slightly reduce hero text sizes on very small screens */
+  .display-3 { font-size: 1.6rem; }
+  .display-5 { font-size: 1.2rem; }
+  .lead { font-size: 1rem; }
+  .hero-icon i { font-size: 3rem !important; }
+  .hero-actions-card .btn { font-size: 0.95rem; padding: 0.6rem 0.8rem; }
+}
+
+/* Registration countdown responsive adjustments */
+@media (max-width: 576px) {
+  #registration-countdown {
+    display: flex !important;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: center;
+    align-items: center;
+  }
+  #registration-countdown .display-3 {
+    font-size: 1.4rem !important;
+    line-height: 1 !important;
+  }
+  #registration-countdown .small {
+    font-size: 0.7rem !important;
+  }
+  .alert {
+    padding: 0.8rem 0.9rem !important;
   }
 }
 
