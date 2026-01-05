@@ -453,10 +453,10 @@ app.get('/admin/register', requireAdmin, (req, res) => {
 
 app.post('/admin/register', requireAdmin, async (req, res) => {
   const { fullname, age, sex, region, zone, woreda, city_kebele, phone_number, finnumber } = req.body;
-  try {
+    try {
     // Check registration and election periods
-    const settingsResult = await pool.query('SELECT election_start_date, election_end_date, registration_start_date, registration_end_date FROM admin_settings WHERE id = 1');
-    const settings = settingsResult.rows[0];
+    const settingsResult = await pool.query('SELECT election_start_date, election_end_date, registration_start_date, registration_end_date, registration_open FROM admin_settings WHERE id = 1');
+    const settings = settingsResult.rows[0] || {};
     const now = new Date();
 
     // Check if currently in election period
@@ -466,17 +466,12 @@ app.post('/admin/register', requireAdmin, async (req, res) => {
       return res.render('registration_error', { errorMessage: 'Voter registration is not allowed during election period' });
     }
 
-    // Check if registration period is set and current time is within it
-    // Require registration to be explicitly open (treat NULL/undefined as closed)
-    if (settings.registration_open !== true) {
+    // Allow registration when admin flag is explicitly true OR when current time falls inside the configured date window
+    const dateWindowOpen = settings.registration_start_date && settings.registration_end_date &&
+      now >= new Date(settings.registration_start_date) && now <= new Date(settings.registration_end_date);
+    const registrationOpenFlag = settings.registration_open === true || Boolean(dateWindowOpen);
+    if (!registrationOpenFlag) {
       return res.render('registration_error', { errorMessage: 'Voter registration is currently closed by administrators' });
-    }
-
-    // Check if registration period is set and current time is within it
-    if (settings.registration_start_date && settings.registration_end_date) {
-      if (now < new Date(settings.registration_start_date) || now > new Date(settings.registration_end_date)) {
-        return res.render('registration_error', { errorMessage: 'Voter registration is only allowed during the specified registration period' });
-      }
     }
 
     // Validate FIN number format: 1234-1234-1234 (12 digits with dashes)
