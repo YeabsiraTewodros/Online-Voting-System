@@ -40,6 +40,9 @@ async function logAdminAction(adminId, action, target = null, details = null, re
     // Ensure JSONB fields are passed as JSON strings to avoid driver type issues
     const oldValuesJson = null;
     const newValuesJson = details ? JSON.stringify(details) : null;
+    try {
+      console.log('logAdminAction inserting:', { adminId: adminId || null, action: action || null, tableName, newValuesJson, ip, userAgent });
+    } catch (e) {}
     const insertRes = await pool.query(
       `INSERT INTO admin_audit_log (
         admin_id, action, table_name, record_id, old_values, new_values, ip_address, user_agent, created_at
@@ -51,6 +54,7 @@ async function logAdminAction(adminId, action, target = null, details = null, re
         console.log('Admin audit inserted id=', insertRes.rows[0].id, 'action=', action, 'admin=', adminId);
       }
     } catch (e) { /* ignore logging errors */ }
+      try { if (req && req.res && req.res.locals) req.res.locals.auditLogged = true; } catch(e){}
   } catch (err) {
     console.error('Failed to log admin action to DB:', err);
     try {
@@ -58,16 +62,16 @@ async function logAdminAction(adminId, action, target = null, details = null, re
       const fallbackDir = path.join(__dirname, 'logs');
       if (!fs.existsSync(fallbackDir)) fs.mkdirSync(fallbackDir, { recursive: true });
       const fallbackFile = path.join(fallbackDir, 'admin_audit_fallback.log');
-      const entry = {
-        timestamp: new Date().toISOString(),
-        adminId: adminId || null,
-        action: action || null,
-        table: tableName || null,
-        details: newValues || null,
-        ip: ip || null,
-        userAgent: userAgent || null,
-        error: String(err)
-      };
+        const entry = {
+          timestamp: new Date().toISOString(),
+          adminId: adminId || null,
+          action: action || null,
+          table: tableName || null,
+          details: newValuesJson || null,
+          ip: ip || null,
+          userAgent: userAgent || null,
+          error: String(err)
+        };
       fs.appendFileSync(fallbackFile, JSON.stringify(entry) + '\n');
       // mark response as audited so middleware won't double-log
       try { if (req && req.res && req.res.locals) req.res.locals.auditLogged = true; } catch(e){}
@@ -77,6 +81,26 @@ async function logAdminAction(adminId, action, target = null, details = null, re
   }
 }
 
+// (audit middleware will be registered after body parsing middleware to ensure req.body is available)
+
+// Helper to log voter activity to the `voter_activity_log` table
+async function logVoterActivity(voterId, action, details = null, req = null) {
+  try {
+    const ip = req ? (req.headers['x-forwarded-for'] || req.connection.remoteAddress || null) : null;
+    const userAgent = req ? req.headers['user-agent'] || null : null;
+    const payload = details ? JSON.stringify(details) : null;
+    await pool.query(
+      `INSERT INTO voter_activity_log (voter_id, action, details, ip_address, user_agent, created_at)
+       VALUES ($1, $2, $3::jsonb, $4, $5, NOW())`,
+      [voterId || null, action || null, payload, ip, userAgent]
+    );
+  } catch (err) {
+    console.error('Failed to log voter activity:', err);
+  }
+}
+
+// Middleware
+app.use(bodyParser.urlencoded({ extended: true }));
 // Middleware: ensure admin write actions are audited even if handler forgets
 app.use('/admin', (req, res, next) => {
   // Only consider authenticated admins and write methods
@@ -99,25 +123,6 @@ app.use('/admin', (req, res, next) => {
 
   next();
 });
-
-// Helper to log voter activity to the `voter_activity_log` table
-async function logVoterActivity(voterId, action, details = null, req = null) {
-  try {
-    const ip = req ? (req.headers['x-forwarded-for'] || req.connection.remoteAddress || null) : null;
-    const userAgent = req ? req.headers['user-agent'] || null : null;
-    const payload = details ? JSON.stringify(details) : null;
-    await pool.query(
-      `INSERT INTO voter_activity_log (voter_id, action, details, ip_address, user_agent, created_at)
-       VALUES ($1, $2, $3::jsonb, $4, $5, NOW())`,
-      [voterId || null, action || null, payload, ip, userAgent]
-    );
-  } catch (err) {
-    console.error('Failed to log voter activity:', err);
-  }
-}
-
-// Middleware
-app.use(bodyParser.urlencoded({ extended: true }));
 app.set('trust proxy', 1); // Required for sessions to work on Render
 app.use(session({
   // This looks for the variable you just added to Render
