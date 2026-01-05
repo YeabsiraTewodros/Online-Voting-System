@@ -796,6 +796,29 @@ h1, h2, h3, h4, h5, h6 {
   }
 }
 
+/* Ensure the registration alert content wraps and is fully visible on very small screens */
+@media (max-width: 480px) {
+  .hero-section .alert {
+    max-width: 100% !important;
+    width: auto !important;
+    padding: 0.6rem 0.8rem !important;
+    overflow: visible !important;
+    word-wrap: break-word;
+    white-space: normal;
+  }
+  .hero-section .alert .display-6 {
+    font-size: 1.1rem !important;
+    line-height: 1.1 !important;
+  }
+  .hero-section .alert .lead {
+    font-size: 0.9rem !important;
+    line-height: 1.2 !important;
+  }
+  .hero-section .alert .display-3 {
+    font-size: 1.2rem !important;
+  }
+}
+
 /* ===== FONT AWESOME ICONS ===== */
 .fas {
   font-family: "Font Awesome 5 Free";
