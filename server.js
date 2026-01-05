@@ -8,8 +8,6 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 require('dotenv').config();
-import pkg from "pg";
-const { Pool } = pkg;
 
 // Helper function to check if voting is currently open
 function isVotingOpen() {
@@ -22,11 +20,7 @@ const port = process.env.PORT || 3000;
 
 // PostgreSQL connection
 const pool = new Pool({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
-  port: process.env.DB_PORT,
+  connectionString: process.env.DATABASE_URL,
   ssl: {
     rejectUnauthorized: false,
   },

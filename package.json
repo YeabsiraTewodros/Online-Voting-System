@@ -6,6 +6,7 @@
     "start": "node server.js",
     "init-db": "node init_db.js",
     "setup": "npm run init-db && npm start",
+    "build": "npm install",
     "migrate:latest": "knex migrate:latest",
     "migrate:rollback": "knex migrate:rollback"
   },
