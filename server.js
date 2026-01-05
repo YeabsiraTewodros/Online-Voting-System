@@ -45,7 +45,26 @@ async function logAdminAction(adminId, action, target = null, details = null, re
       [adminId, action, tableName, recordId, null, newValues, ip, userAgent]
     );
   } catch (err) {
-    console.error('Failed to log admin action:', err);
+    console.error('Failed to log admin action to DB:', err);
+    try {
+      // Fallback: write to local file so we don't lose audit info when DB is unavailable
+      const fallbackDir = path.join(__dirname, 'logs');
+      if (!fs.existsSync(fallbackDir)) fs.mkdirSync(fallbackDir, { recursive: true });
+      const fallbackFile = path.join(fallbackDir, 'admin_audit_fallback.log');
+      const entry = {
+        timestamp: new Date().toISOString(),
+        adminId: adminId || null,
+        action: action || null,
+        table: tableName || null,
+        details: newValues || null,
+        ip: ip || null,
+        userAgent: userAgent || null,
+        error: String(err)
+      };
+      fs.appendFileSync(fallbackFile, JSON.stringify(entry) + '\n');
+    } catch (fileErr) {
+      console.error('Failed to write admin audit fallback file:', fileErr);
+    }
   }
 }
 

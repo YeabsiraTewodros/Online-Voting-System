@@ -753,6 +753,25 @@ body {
     }
 }
 
+/* Force single-column party layout on small and narrow tablets/phones for clarity */
+@media (max-width: 768px) {
+    .custom-row.custom-g-4 {
+        display: grid !important;
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+    }
+
+    .custom-col-lg-3 {
+        flex: none !important;
+        max-width: 100% !important;
+        padding: 0 !important;
+    }
+
+    .party-card {
+        margin-bottom: 12px !important;
+    }
+}
+
 /* On very small phones, present the navbar links in a compact 2x2 grid so all links are visible */
 @media (max-width: 480px) {
     .custom-navbar-collapse.show {

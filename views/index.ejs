@@ -56,7 +56,7 @@
                     <div class="hero-content">
                         <% if (registrationPeriodOpen) { %>
                         <div class="d-flex justify-content-center mb-4">
-                            <div class="alert alert-success text-center py-3 px-4 shadow-lg" style="width:100%; max-width:520px; border-radius:12px;">
+                                <div id="registration-alert" class="alert alert-success text-center py-3 px-4 shadow-lg" style="width:100%; max-width:520px; border-radius:12px;">
                                     <div class="fw-bold display-6 mb-1">Registration OPEN</div>
                                     <div class="lead mb-0">Voter registration is currently open — admins are registering voters now register before it end.</div>
                                     <div id="registration-countdown" class="mt-3" style="display:none;">
@@ -557,6 +557,20 @@
             }
         })();
     </script>
+        <script>
+          // Defensive client-side guard: hide registration UI when server says closed
+          (function(){
+            try {
+              const open = <%= registrationPeriodOpen ? 'true' : 'false' %>;
+              if (!open) {
+                const alertEl = document.getElementById('registration-alert');
+                if (alertEl) alertEl.style.display = 'none';
+                const cnt = document.getElementById('registration-countdown');
+                if (cnt) cnt.style.display = 'none';
+              }
+            } catch(e) { /* ignore */ }
+          })();
+        </script>
     <!-- Navbar toggle script -->   
         <script>
             (function(){
