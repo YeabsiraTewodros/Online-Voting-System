@@ -734,8 +734,46 @@ app.get('/admin/audit', requireOriginalSuperAdmin, async (req, res) => {
     sql += ` ORDER BY created_at DESC LIMIT 500`;
 
     const result = await pool.query(sql, params);
+    let audits = result.rows || [];
+
+    // If DB returned no audit rows, try to include fallback file entries
+    if ((!audits || audits.length === 0)) {
+      try {
+        const fallbackPath = path.join(__dirname, 'logs', 'admin_audit_fallback.log');
+        if (fs.existsSync(fallbackPath)) {
+          const raw = fs.readFileSync(fallbackPath, 'utf8').trim();
+          if (raw) {
+            const lines = raw.split(/\r?\n/).filter(Boolean).slice(-500).reverse();
+            audits = lines.map((ln, idx) => {
+              try {
+                const obj = JSON.parse(ln);
+                return {
+                  id: 0 - idx, // negative id for fallback entries
+                  admin_id: obj.adminId || null,
+                  action: obj.action || 'fallback',
+                  table_name: obj.table || null,
+                  record_id: null,
+                  old_values: null,
+                  new_values: obj.details || null,
+                  ip_address: obj.ip || null,
+                  user_agent: obj.userAgent || null,
+                  created_at: obj.timestamp || new Date().toISOString()
+                };
+              } catch (e) {
+                return null;
+              }
+            }).filter(Boolean);
+          }
+        } else {
+          console.log('/admin/audit: no fallback audit file at', fallbackPath);
+        }
+      } catch (e) {
+        console.error('Error reading fallback admin audit file:', e);
+      }
+    }
+
     res.render('admin_audit', {
-      audits: result.rows,
+      audits: audits,
       filters: { admin_id: admin_id || '', action: action || '', table_name: table_name || '', from: from || '', to: to || '' }
     });
   } catch (err) {
