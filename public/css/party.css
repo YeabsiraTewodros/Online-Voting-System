@@ -680,6 +680,23 @@ body {
     .ideology-section, .leader-section, .description-section {
         margin-bottom: 0.65rem !important;
     }
+
+    /* Show two party cards per row on narrow phones for better use of horizontal space */
+    .custom-row.custom-g-4 {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+
+    .custom-col-lg-3 {
+        flex: none;
+        max-width: 100%;
+        padding: 0;
+    }
+
+    .party-card {
+        margin-bottom: 0; /* grid gap handles spacing */
+    }
 }
 
 /* Improve mobile menu visibility and link affordance */

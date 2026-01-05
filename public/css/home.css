@@ -724,16 +724,21 @@ h1, h2, h3, h4, h5, h6 {
     display: none;
   }
 
+  /* Make the mobile dropdown overlay fixed and scrollable so it's fully visible */
   .navbar-collapse.show {
     display: flex !important;
     z-index: 1200;
     flex-direction: column;
-    width: 100%;
+    position: fixed;
+    top: 56px; /* below the header */
     left: 0;
     right: 0;
-    top: 100%;
+    max-height: calc(100vh - 56px);
+    overflow-y: auto;
     background: rgba(55,70,88,0.98); /* match header with high contrast */
     padding: 0.75rem 1rem;
+    border-bottom-left-radius: 12px;
+    border-bottom-right-radius: 12px;
   }
 
   .navbar-nav {
