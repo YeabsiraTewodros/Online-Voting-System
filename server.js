@@ -291,7 +291,7 @@ app.post('/login', async (req, res) => {
     if (voter.locked_until && new Date(voter.locked_until) > now) {
       const remainingMs = new Date(voter.locked_until) - now;
       const remainingMinutes = Math.ceil(remainingMs / 60000);
-      return res.render('voter_locked', { remainingMinutes, unlockAt: voter.locked_until });
+      return res.render('voter_locked', { remainingMinutes, unlockAt: voter.locked_until ? new Date(voter.locked_until).toISOString() : null });
     }
 
     const isValidPassword = await bcrypt.compare(password, voter.password);
@@ -325,7 +325,7 @@ app.post('/login', async (req, res) => {
           console.error('Voter activity log error (locked_out):', err);
         }
         const remainingMinutes = lockMinutes;
-        return res.render('voter_locked', { remainingMinutes, unlockAt });
+        return res.render('voter_locked', { remainingMinutes, unlockAt: unlockAt ? unlockAt.toISOString() : null });
       } else {
         await pool.query('UPDATE voters SET login_attempts = $1 WHERE id = $2', [attempts, voter.id]);
         return res.redirect('/login');
@@ -745,42 +745,40 @@ app.get('/admin/audit', requireOriginalSuperAdmin, async (req, res) => {
     }
     let audits = result.rows || [];
 
-    // If DB returned no audit rows, try to include fallback file entries
-    if ((!audits || audits.length === 0)) {
-      console.log('/admin/audit: no DB audit rows, attempting to read fallback file');
-      try {
-        const fallbackPath = path.join(__dirname, 'logs', 'admin_audit_fallback.log');
-        if (fs.existsSync(fallbackPath)) {
-          console.log('/admin/audit: fallback file exists at', fallbackPath);
-          const raw = fs.readFileSync(fallbackPath, 'utf8').trim();
-          if (raw) {
-            const lines = raw.split(/\r?\n/).filter(Boolean).slice(-500).reverse();
-            audits = lines.map((ln, idx) => {
-              try {
-                const obj = JSON.parse(ln);
-                return {
-                  id: 0 - idx, // negative id for fallback entries
-                  admin_id: obj.adminId || null,
-                  action: obj.action || 'fallback',
-                  table_name: obj.table || null,
-                  record_id: null,
-                  old_values: null,
-                  new_values: obj.details || null,
-                  ip_address: obj.ip || null,
-                  user_agent: obj.userAgent || null,
-                  created_at: obj.timestamp || new Date().toISOString()
-                };
-              } catch (e) {
-                return null;
-              }
-            }).filter(Boolean);
-          }
-        } else {
-          console.log('/admin/audit: no fallback audit file at', fallbackPath);
+    // Also attempt to read fallback file entries and append them after DB results
+    try {
+      const fallbackPath = path.join(__dirname, 'logs', 'admin_audit_fallback.log');
+      if (fs.existsSync(fallbackPath)) {
+        console.log('/admin/audit: fallback file exists at', fallbackPath);
+        const raw = fs.readFileSync(fallbackPath, 'utf8').trim();
+        if (raw) {
+          const lines = raw.split(/\r?\n/).filter(Boolean).slice(-500).reverse();
+          const fallbackEntries = lines.map((ln, idx) => {
+            try {
+              const obj = JSON.parse(ln);
+              return {
+                id: (audits.length + 1) * -1 - idx,
+                admin_id: obj.adminId || null,
+                action: obj.action || 'fallback',
+                table_name: obj.table || null,
+                record_id: null,
+                old_values: null,
+                new_values: obj.details || null,
+                ip_address: obj.ip || null,
+                user_agent: obj.userAgent || null,
+                created_at: obj.timestamp || new Date().toISOString()
+              };
+            } catch (e) {
+              return null;
+            }
+          }).filter(Boolean);
+          audits = audits.concat(fallbackEntries);
         }
-      } catch (e) {
-        console.error('Error reading fallback admin audit file:', e);
+      } else {
+        console.log('/admin/audit: no fallback audit file at', fallbackPath);
       }
+    } catch (e) {
+      console.error('Error reading fallback admin audit file:', e);
     }
 
     res.render('admin_audit', {
