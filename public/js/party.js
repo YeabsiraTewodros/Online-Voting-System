@@ -1,23 +1,27 @@
 // Party Page Interactive Features
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize all features
-    initializeModals();
-    initializeAnimations();
-    initializeScrollEffects();
+    // Initialize all features (each initializer is defensive)
+    try { initializeModals(); } catch (e) { console.warn('initModals error', e); }
+    try { initializeAnimations(); } catch (e) { console.warn('initAnimations error', e); }
+    try { initializeScrollEffects(); } catch (e) { console.warn('initScrollEffects error', e); }
 });
 
 // Search Functionality
 function initializeSearch() {
     const searchInput = document.getElementById('partySearch');
     const partyCards = document.querySelectorAll('.party-card');
+    if (!searchInput) return;
 
     searchInput.addEventListener('input', function(e) {
         const searchTerm = e.target.value.toLowerCase().trim();
 
         partyCards.forEach(card => {
-            const partyName = card.querySelector('h3').textContent.toLowerCase();
-            const partyNameAmharic = card.querySelector('p.opacity-75').textContent.toLowerCase();
-            const description = card.querySelector('.description-section p').textContent.toLowerCase();
+            const partyNameEl = card.querySelector('h2, h3');
+            const partyName = partyNameEl ? (partyNameEl.textContent || '').toLowerCase() : '';
+            const partyNameAmharicEl = card.querySelector('.custom-opacity-75, .opacity-75, p');
+            const partyNameAmharic = partyNameAmharicEl ? (partyNameAmharicEl.textContent || '').toLowerCase() : '';
+            const descEl = card.querySelector('.description-section p');
+            const description = descEl ? (descEl.textContent || '').toLowerCase() : '';
 
             const matches = partyName.includes(searchTerm) ||
                           partyNameAmharic.includes(searchTerm) ||
@@ -69,23 +73,25 @@ function initializeModals() {
     const partyCards = document.querySelectorAll('.party-card');
     const modal = document.getElementById('partyModal');
 
+    if (!modal) return;
+
     partyCards.forEach(card => {
-        card.addEventListener('click', function() {
+        card.addEventListener('click', function(e) {
+            // Prevent clicks originating from links inside the card (if any)
+            if (e.target.closest('a')) return;
             const partyData = extractPartyData(this);
             populateModal(modal, partyData);
             modal.style.display = 'block';
             document.body.style.overflow = 'hidden';
 
             // Animate modal entrance
-            setTimeout(() => {
-                modal.classList.add('show');
-            }, 10);
+            setTimeout(() => modal.classList.add('show'), 10);
         });
     });
 
-    // Close modal
+    // Close modal when clicking background or close button
     modal.addEventListener('click', function(e) {
-        if (e.target === modal || e.target.classList.contains('close')) {
+        if (e.target === modal || e.target.classList.contains('custom-close')) {
             closeModal(modal);
         }
     });
@@ -99,33 +105,51 @@ function initializeModals() {
 }
 
 function extractPartyData(card) {
+    const nameEl = card.querySelector('h2, h3');
+    const amharicEl = card.querySelector('.custom-opacity-75, .opacity-75, p');
+    const logoEl = card.querySelector('.party-logo img');
+    const ideologyEl = card.querySelector('.ideology-section p');
+    const leaderNameEl = card.querySelector('.leader-section h6');
+    const leaderAmharicEl = card.querySelector('.leader-section p');
+    const leaderImageEl = card.querySelector('.leader-avatar img, .leader-avatar');
+    const descEl = card.querySelector('.description-section');
+    const badgeEl = card.querySelector('.badge');
+
     return {
-        name: card.querySelector('h3').textContent,
-        nameAmharic: card.querySelector('p.opacity-75').textContent,
-        logo: card.querySelector('.party-logo img').src,
-        ideology: card.querySelector('.ideology-section p').textContent,
+        name: nameEl ? (nameEl.textContent || '').trim() : '',
+        nameAmharic: amharicEl ? (amharicEl.textContent || '').trim() : '',
+        logo: logoEl ? (logoEl.src || '') : '',
+        ideology: ideologyEl ? (ideologyEl.textContent || '').trim() : '',
         leader: {
-            name: card.querySelector('.leader-section h6').textContent,
-            nameAmharic: card.querySelector('.leader-section p').textContent,
-            image: card.querySelector('.leader-avatar').src
+            name: leaderNameEl ? (leaderNameEl.textContent || '').trim() : '',
+            nameAmharic: leaderAmharicEl ? (leaderAmharicEl.textContent || '').trim() : '',
+            image: (leaderImageEl && leaderImageEl.src) ? leaderImageEl.src : ''
         },
-        description: card.querySelector('.description-section').innerHTML,
-        badge: card.querySelector('.badge').textContent,
-        badgeClass: card.querySelector('.badge').className
+        description: descEl ? descEl.innerHTML : '',
+        badge: badgeEl ? (badgeEl.textContent || '').trim() : '',
+        badgeClass: badgeEl ? (badgeEl.className || '') : ''
     };
 }
 
 function populateModal(modal, data) {
-    modal.querySelector('.modal-title').textContent = data.name;
-    modal.querySelector('.modal-logo').src = data.logo;
-    modal.querySelector('.modal-ideology').textContent = data.ideology;
-    modal.querySelector('.modal-leader-name').textContent = data.leader.name;
-    modal.querySelector('.modal-leader-image').src = data.leader.image;
-    modal.querySelector('.modal-description').innerHTML = data.description;
+    const titleEl = modal.querySelector('.custom-modal-title, .modal-title');
+    const logoEl = modal.querySelector('.custom-modal-logo, .modal-logo');
+    const ideologyEl = modal.querySelector('.custom-modal-ideology, .modal-ideology');
+    const leaderNameEl = modal.querySelector('.custom-modal-leader-name, .modal-leader-name');
+    const leaderImgEl = modal.querySelector('.custom-modal-leader-image, .modal-leader-image');
+    const descEl = modal.querySelector('.custom-modal-description, .modal-description');
+    const badgeEl = modal.querySelector('.custom-modal-badge, .modal-badge');
 
-    const badge = modal.querySelector('.modal-badge');
-    badge.textContent = data.badge;
-    badge.className = `badge ${data.badgeClass.split(' ').slice(1).join(' ')}`;
+    if (titleEl) titleEl.textContent = data.name;
+    if (logoEl && data.logo) logoEl.src = data.logo;
+    if (ideologyEl) ideologyEl.textContent = data.ideology;
+    if (leaderNameEl) leaderNameEl.textContent = data.leader.name;
+    if (leaderImgEl && data.leader.image) leaderImgEl.src = data.leader.image;
+    if (descEl) descEl.innerHTML = data.description;
+    if (badgeEl) {
+        badgeEl.textContent = data.badge || '';
+        if (data.badgeClass) badgeEl.className = data.badgeClass + ' custom-modal-badge';
+    }
 }
 
 function closeModal(modal) {
