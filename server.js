@@ -745,40 +745,42 @@ app.get('/admin/audit', requireOriginalSuperAdmin, async (req, res) => {
     }
     let audits = result.rows || [];
 
-    // Also attempt to read fallback file entries and append them after DB results
-    try {
-      const fallbackPath = path.join(__dirname, 'logs', 'admin_audit_fallback.log');
-      if (fs.existsSync(fallbackPath)) {
-        console.log('/admin/audit: fallback file exists at', fallbackPath);
-        const raw = fs.readFileSync(fallbackPath, 'utf8').trim();
-        if (raw) {
-          const lines = raw.split(/\r?\n/).filter(Boolean).slice(-500).reverse();
-          const fallbackEntries = lines.map((ln, idx) => {
-            try {
-              const obj = JSON.parse(ln);
-              return {
-                id: (audits.length + 1) * -1 - idx,
-                admin_id: obj.adminId || null,
-                action: obj.action || 'fallback',
-                table_name: obj.table || null,
-                record_id: null,
-                old_values: null,
-                new_values: obj.details || null,
-                ip_address: obj.ip || null,
-                user_agent: obj.userAgent || null,
-                created_at: obj.timestamp || new Date().toISOString()
-              };
-            } catch (e) {
-              return null;
-            }
-          }).filter(Boolean);
-          audits = audits.concat(fallbackEntries);
+    // If DB returned no audit rows, try to include fallback file entries
+    if ((!audits || audits.length === 0)) {
+      console.log('/admin/audit: no DB audit rows, attempting to read fallback file');
+      try {
+        const fallbackPath = path.join(__dirname, 'logs', 'admin_audit_fallback.log');
+        if (fs.existsSync(fallbackPath)) {
+          console.log('/admin/audit: fallback file exists at', fallbackPath);
+          const raw = fs.readFileSync(fallbackPath, 'utf8').trim();
+          if (raw) {
+            const lines = raw.split(/\r?\n/).filter(Boolean).slice(-500).reverse();
+            audits = lines.map((ln, idx) => {
+              try {
+                const obj = JSON.parse(ln);
+                return {
+                  id: 0 - idx, // negative id for fallback entries
+                  admin_id: obj.adminId || null,
+                  action: obj.action || 'fallback',
+                  table_name: obj.table || null,
+                  record_id: null,
+                  old_values: null,
+                  new_values: obj.details || null,
+                  ip_address: obj.ip || null,
+                  user_agent: obj.userAgent || null,
+                  created_at: obj.timestamp || new Date().toISOString()
+                };
+              } catch (e) {
+                return null;
+              }
+            }).filter(Boolean);
+          }
+        } else {
+          console.log('/admin/audit: no fallback audit file at', fallbackPath);
         }
-      } else {
-        console.log('/admin/audit: no fallback audit file at', fallbackPath);
+      } catch (e) {
+        console.error('Error reading fallback admin audit file:', e);
       }
-    } catch (e) {
-      console.error('Error reading fallback admin audit file:', e);
     }
 
     res.render('admin_audit', {
@@ -1217,6 +1219,31 @@ app.get('/admin/logout', (req, res) => {
 // Static files middleware (placed after routes to allow dynamic routes to take precedence)
 app.use(express.static('public'));
 
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
+// Ensure there's at least one audit row for visibility and diagnostics
+async function ensureAuditSeed() {
+  try {
+    const c = await pool.query('SELECT COUNT(*)::int AS cnt FROM admin_audit_log');
+    const cnt = c && c.rows && c.rows[0] ? Number(c.rows[0].cnt) : 0;
+    if (cnt === 0) {
+      const info = { note: 'Initial audit seed', time: new Date().toISOString() };
+      await pool.query(`INSERT INTO admin_audit_log (admin_id, action, table_name, new_values, created_at) VALUES ($1, $2, $3, $4::jsonb, NOW())`, [null, 'system_start', 'system', JSON.stringify(info)]);
+      console.log('Inserted initial admin_audit_log seed row');
+    } else {
+      console.log('Admin audit rows present:', cnt);
+    }
+  } catch (e) {
+    console.error('Error ensuring audit seed:', e);
+  }
+}
+
+ensureAuditSeed().then(() => {
+  app.listen(port, () => {
+    console.log(`Server is running on port ${port}`);
+  });
+}).catch((err) => {
+  console.error('Failed to start server due to audit seed error:', err);
+  // still start server
+  app.listen(port, () => {
+    console.log(`Server is running on port ${port} (seed attempt failed)`);
+  });
 });
