@@ -70,10 +70,16 @@ async function logVoterActivity(voterId, action, details = null, req = null) {
 
 // Middleware
 app.use(bodyParser.urlencoded({ extended: true }));
+app.set('trust proxy', 1); // Required for sessions to work on Render
 app.use(session({
-  secret: process.env.SESSION_SECRET,
+  // This looks for the variable you just added to Render
+  secret: process.env.SESSION_SECRET || 'local_development_secret', 
   resave: false,
-  saveUninitialized: true,
+  saveUninitialized: false,
+  cookie: { 
+    // This ensures cookies only work over HTTPS when live
+    secure: process.env.NODE_ENV === 'production' 
+  }
 }));
 app.set('view engine', 'ejs');
 
