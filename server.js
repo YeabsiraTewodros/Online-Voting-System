@@ -630,8 +630,8 @@ app.post('/admin/registration-period', requireOriginalSuperAdmin, async (req, re
     // Log the admin action for audit trail
     console.log(`Admin ${req.session.adminId} setting registration period from ${registration_start_date} to ${registration_end_date} at ${new Date().toISOString()}`);
 
-    // Update the registration dates
-    await pool.query('UPDATE admin_settings SET registration_start_date = $1, registration_end_date = $2 WHERE id = 1', [startDate, endDate]);
+    // Update the registration dates and explicitly mark registration as open
+    await pool.query('UPDATE admin_settings SET registration_start_date = $1, registration_end_date = $2, registration_open = TRUE WHERE id = 1', [startDate, endDate]);
 
     // Log the successful action
     console.log(`Registration period set by admin ${req.session.adminId} from ${startDate} to ${endDate}`);
@@ -652,7 +652,8 @@ app.post('/admin/registration-period', requireOriginalSuperAdmin, async (req, re
 app.post('/admin/registration-period/reset', requireOriginalSuperAdmin, async (req, res) => {
   try {
     console.log(`Admin ${req.session.adminId} resetting registration period at ${new Date().toISOString()}`);
-    await pool.query('UPDATE admin_settings SET registration_start_date = NULL, registration_end_date = NULL WHERE id = 1');
+    // Clear registration dates and explicitly mark registration as closed
+    await pool.query('UPDATE admin_settings SET registration_start_date = NULL, registration_end_date = NULL, registration_open = FALSE WHERE id = 1');
     try {
       await logAdminAction(req.session.adminId, 'reset_registration_period', 'admin_settings', { action: 'reset' }, req);
     } catch (err) {

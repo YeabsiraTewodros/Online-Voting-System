@@ -681,10 +681,10 @@ body {
         margin-bottom: 0.65rem !important;
     }
 
-    /* Show two party cards per row on narrow phones for better use of horizontal space */
+    /* Stack party cards vertically on very small phones for clarity */
     .custom-row.custom-g-4 {
         display: grid;
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: 1fr;
         gap: 12px;
     }
 
@@ -695,7 +695,7 @@ body {
     }
 
     .party-card {
-        margin-bottom: 0; /* grid gap handles spacing */
+        margin-bottom: 12px;
     }
 }
 
