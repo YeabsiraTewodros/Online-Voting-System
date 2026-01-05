@@ -613,7 +613,7 @@ body {
     }
 
     .party-card {
-        margin-bottom: 2rem;
+        margin-bottom: 1.25rem;
     }
 
     .hero-section {
@@ -636,6 +636,49 @@ body {
 
     .custom-display-4 {
         font-size: 2rem;
+    }
+}
+
+/* Make cards compact on small phones to avoid very tall thin layout */
+@media (max-width: 480px) {
+    .party-card {
+        min-height: auto !important;
+        padding-bottom: 0.75rem;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .custom-card-header {
+        padding: 1rem !important;
+    }
+
+    .custom-card-body {
+        padding: 0.9rem !important;
+        flex: 1 1 auto;
+    }
+
+    .party-logo img {
+        width: 72px !important;
+        height: 72px !important;
+    }
+
+    .leader-avatar {
+        width: 56px !important;
+        height: 56px !important;
+    }
+
+    .party-card h2 {
+        font-size: 1.25rem !important;
+        line-height: 1.1;
+        margin-bottom: 0.25rem;
+    }
+
+    .custom-small, .custom-lead, .custom-text-muted {
+        font-size: 0.95rem !important;
+    }
+
+    .ideology-section, .leader-section, .description-section {
+        margin-bottom: 0.65rem !important;
     }
 }
 
