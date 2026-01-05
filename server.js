@@ -40,12 +40,17 @@ async function logAdminAction(adminId, action, target = null, details = null, re
     // Ensure JSONB fields are passed as JSON strings to avoid driver type issues
     const oldValuesJson = null;
     const newValuesJson = details ? JSON.stringify(details) : null;
-    await pool.query(
+    const insertRes = await pool.query(
       `INSERT INTO admin_audit_log (
         admin_id, action, table_name, record_id, old_values, new_values, ip_address, user_agent, created_at
-      ) VALUES ($1, $2, $3, $4, $5::jsonb, $6::jsonb, $7, $8, NOW())`,
+      ) VALUES ($1, $2, $3, $4, $5::jsonb, $6::jsonb, $7, $8, NOW()) RETURNING id`,
       [adminId || null, action || null, tableName, recordId, oldValuesJson, newValuesJson, ip, userAgent]
     );
+    try {
+      if (insertRes && insertRes.rows && insertRes.rows[0]) {
+        console.log('Admin audit inserted id=', insertRes.rows[0].id, 'action=', action, 'admin=', adminId);
+      }
+    } catch (e) { /* ignore logging errors */ }
   } catch (err) {
     console.error('Failed to log admin action to DB:', err);
     try {
@@ -734,13 +739,19 @@ app.get('/admin/audit', requireOriginalSuperAdmin, async (req, res) => {
     sql += ` ORDER BY created_at DESC LIMIT 500`;
 
     const result = await pool.query(sql, params);
+    console.log('/admin/audit: query returned rows=', result && result.rowCount);
+    if (result && result.rowCount && Array.isArray(result.rows) && result.rows.length>0) {
+      console.log('/admin/audit: sample row:', result.rows[0]);
+    }
     let audits = result.rows || [];
 
     // If DB returned no audit rows, try to include fallback file entries
     if ((!audits || audits.length === 0)) {
+      console.log('/admin/audit: no DB audit rows, attempting to read fallback file');
       try {
         const fallbackPath = path.join(__dirname, 'logs', 'admin_audit_fallback.log');
         if (fs.existsSync(fallbackPath)) {
+          console.log('/admin/audit: fallback file exists at', fallbackPath);
           const raw = fs.readFileSync(fallbackPath, 'utf8').trim();
           if (raw) {
             const lines = raw.split(/\r?\n/).filter(Boolean).slice(-500).reverse();
@@ -779,6 +790,29 @@ app.get('/admin/audit', requireOriginalSuperAdmin, async (req, res) => {
   } catch (err) {
     console.error('Error loading admin audit log:', err);
     res.send('Error loading audit log');
+  }
+});
+
+// Debug endpoint to fetch recent audit rows and fallback entries as JSON
+app.get('/admin/audit/debug', requireOriginalSuperAdmin, async (req, res) => {
+  try {
+    const db = await pool.query('SELECT id, admin_id, action, table_name, record_id, old_values, new_values, ip_address, user_agent, created_at FROM admin_audit_log ORDER BY created_at DESC LIMIT 500');
+    let fallback = [];
+    try {
+      const fallbackPath = path.join(__dirname, 'logs', 'admin_audit_fallback.log');
+      if (fs.existsSync(fallbackPath)) {
+        const raw = fs.readFileSync(fallbackPath, 'utf8').trim();
+        if (raw) {
+          fallback = raw.split(/\r?\n/).filter(Boolean).map((ln) => { try { return JSON.parse(ln); } catch(e){ return {raw:ln}; } });
+        }
+      }
+    } catch (e) {
+      console.error('Error reading fallback for debug endpoint:', e);
+    }
+    res.json({ dbCount: db.rowCount, dbRows: db.rows, fallbackCount: fallback.length, fallback });
+  } catch (err) {
+    console.error('Error in audit debug endpoint:', err);
+    res.status(500).json({ error: String(err) });
   }
 });
 
