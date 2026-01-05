@@ -151,11 +151,15 @@ const parties = [
 app.get('/', (req, res) => {
   (async () => {
     try {
-      const result = await pool.query('SELECT registration_start_date, registration_end_date FROM admin_settings WHERE id = 1');
+      const result = await pool.query('SELECT registration_start_date, registration_end_date, registration_open FROM admin_settings WHERE id = 1');
       const settings = result.rows[0] || {};
       const now = new Date();
-      const registrationPeriodOpen = settings.registration_start_date && settings.registration_end_date &&
+
+      // Consider registration open if admin explicitly set the flag OR current time falls inside the date window
+      const dateWindowOpen = settings.registration_start_date && settings.registration_end_date &&
         now >= new Date(settings.registration_start_date) && now <= new Date(settings.registration_end_date);
+      const registrationPeriodOpen = (settings.registration_open === true) || Boolean(dateWindowOpen);
+
       const registrationStartDate = settings.registration_start_date ? new Date(settings.registration_start_date).toLocaleString() : '';
       const registrationEndDate = settings.registration_end_date ? new Date(settings.registration_end_date).toLocaleString() : '';
       const isSuperAdmin = req.session.isAdmin && req.session.adminRole === 'super_admin';
