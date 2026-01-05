@@ -728,7 +728,7 @@ h1, h2, h3, h4, h5, h6 {
     gap: 8px;
     padding: 8px 12px;
     border-radius: 12px;
-    background: linear-gradient(90deg,#ff7a18,#ffb199);
+    background: linear-gradient(90deg,#a4771e,#ffb199);
     border: none;
     box-shadow: 0 8px 20px rgba(0,0,0,0.25);
     color: #fff;

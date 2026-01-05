@@ -753,6 +753,40 @@ body {
     }
 }
 
+/* On very small phones, present the navbar links in a compact 2x2 grid so all links are visible */
+@media (max-width: 480px) {
+    .custom-navbar-collapse.show {
+        padding: 0.5rem;
+    }
+
+    .custom-navbar-collapse.show .custom-navbar-nav {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+        align-items: stretch;
+    }
+
+    .custom-nav-item {
+        margin: 0;
+        width: 100%;
+    }
+
+    .custom-nav-link {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.6rem 0.5rem;
+        border-radius: 10px;
+        background: rgba(255,255,255,0.04);
+        text-align: center;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .custom-nav-link::before { display: none; }
+}
+
 /* Accessibility */
 @media (prefers-reduced-motion: reduce) {
     *,
