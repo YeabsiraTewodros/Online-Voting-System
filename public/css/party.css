@@ -639,6 +639,60 @@ body {
     }
 }
 
+/* Improve mobile menu visibility and link affordance */
+@media (max-width: 768px) {
+    .custom-navbar-collapse.show {
+        background: linear-gradient(180deg, rgba(29, 38, 49, 0.98), rgba(29, 38, 49, 0.98));
+        padding: 1rem;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.35);
+        border-bottom-left-radius: 12px;
+        border-bottom-right-radius: 12px;
+    }
+
+    .custom-nav-link {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.9rem 1rem;
+        border-radius: 8px;
+        background: transparent;
+        transition: background 200ms ease, transform 150ms ease;
+    }
+
+    .custom-nav-link::before {
+        content: '';
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #ffffff33;
+        margin-right: 0.5rem;
+        flex: 0 0 auto;
+        transform-origin: center;
+        transition: transform 200ms ease, background 200ms ease, opacity 200ms ease;
+        opacity: 0.9;
+    }
+
+    .custom-nav-link:hover,
+    .custom-nav-link:focus,
+    .custom-nav-link.active {
+        background: rgba(255,255,255,0.08);
+        transform: translateY(-2px);
+    }
+
+    .custom-nav-link.active::before {
+        background: #fff;
+        transform: scale(1.15);
+    }
+
+    .custom-nav-link {
+        color: #fff !important;
+    }
+
+    .custom-navbar-toggler {
+        z-index: 1100;
+    }
+}
+
 /* Accessibility */
 @media (prefers-reduced-motion: reduce) {
     *,
